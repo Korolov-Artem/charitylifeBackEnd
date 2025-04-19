@@ -3,5 +3,7 @@
  */
 
 export type ArticleCreateModel = {
-    title: string
+    title: string,
+    content: string,
+    theme: string
 }

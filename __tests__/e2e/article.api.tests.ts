@@ -1,7 +1,7 @@
 import request from 'supertest'
-import {app} from '../../src'
 import {ArticleCreateModel} from "../../src/models/ArticleCreateModel";
 import {ArticleUpdateModel} from "../../src/models/ArticleUpdateModel";
+import {app} from "../../src/app";
 
 describe('/articles', () => {
     beforeAll(async () => {
@@ -21,7 +21,7 @@ describe('/articles', () => {
     })
 
     it(`doesn't create an article with correct input data`, async () => {
-        const data: ArticleCreateModel = {title: ''}
+        const data: ArticleCreateModel = {title: '', content: '', theme: ''}
 
         await request(app)
             .post('/articles')
@@ -36,7 +36,7 @@ describe('/articles', () => {
     let createdArticle: any = null
 
     it('creates an article with correct input data', async () => {
-        const data: ArticleCreateModel = {title: 'new article'}
+        const data: ArticleCreateModel = {title: 'new article', content: '', theme: ''}
 
         const response = await request(app)
             .post('/articles')
