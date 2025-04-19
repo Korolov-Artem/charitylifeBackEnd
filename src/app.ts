@@ -9,7 +9,7 @@ export const app = express();
 export const parserMiddleware = bodyParser.json();
 app.use(parserMiddleware)
 
-const articlesRouter = getArticlesRoutes(db)
+const articlesRouter = getArticlesRoutes()
 app.use("/articles", articlesRouter)
 
 const testsRouter = getTestsRoutes(db)

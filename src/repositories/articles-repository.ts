@@ -20,7 +20,7 @@ export const articlesRepository = {
         const formattedDate = newDate.toLocaleDateString("en-GB")
         const newArticle: ArticleType = {
             id: +(new Date()), title: title,
-            content: content, theme: theme, dataPublished: formattedDate
+            content: content, theme: theme, dataPublished: formattedDate, author: "Gene Korolov"
         }
         db.articles.push(newArticle)
         return (newArticle)

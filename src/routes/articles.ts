@@ -5,8 +5,10 @@ import {ArticleViewModel} from "../models/ArticleViewModel";
 import {ArticleURIParamsIdModel} from "../models/ArticleURIParamsIdModel";
 import {ArticleCreateModel} from "../models/ArticleCreateModel";
 import {ArticleUpdateModel} from "../models/ArticleUpdateModel";
-import {ArticleType, DBType} from "../db/db";
+import {ArticleType} from "../db/db";
 import {articlesRepository} from "../repositories/articles-repository";
+import {body, matchedData, validationResult} from "express-validator";
+import {ArticleErrorsModel} from "../models/ArticleErrorsModel";
 
 export const ArticleGetViewModel = (dbArticle: ArticleType):
     ArticleViewModel => {
@@ -16,7 +18,7 @@ export const ArticleGetViewModel = (dbArticle: ArticleType):
     }
 }
 
-export const getArticlesRoutes = (db: DBType) => {
+export const getArticlesRoutes = () => {
 
     const router = express.Router()
 
@@ -39,16 +41,23 @@ export const getArticlesRoutes = (db: DBType) => {
         }
     })
 
-    router.post('/', (req: RequestWithBody<ArticleCreateModel>,
-                      res: Response<ArticleViewModel>) => {
-        if (!req.body.title) {
-            res.sendStatus(400)
-        } else {
+    router.post('/', body("title").notEmpty().escape(), (req: RequestWithBody<ArticleCreateModel>,
+                                                         res: Response<ArticleViewModel | ArticleErrorsModel>) => {
+        const result = validationResult(req)
+        if (result.isEmpty()) {
+            const data = matchedData(req)
             const createdArticle = articlesRepository.createArticle(
-                req.body.title, req.body.content, req.body.theme
+                data.title, data.content, data.theme
             )
             res.status(201).json(ArticleGetViewModel(createdArticle))
+            return;
         }
+        res.status(400).send({
+            errors: result.array().map(err => ({
+                field: (err as any).path || "unknown",
+                message: err.msg
+            }))
+        })
     })
 
     router.put('/:id', (req: RequestWithParamsAndBody<{ id: string },
