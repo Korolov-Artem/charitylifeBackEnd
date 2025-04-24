@@ -1,7 +1,7 @@
 import {ArticleType, db} from "../db/db";
 
 export const articlesRepository = {
-    findArticles(title: string | null | undefined) {
+    async findArticles(title: string | null | undefined): Promise<ArticleType[]> {
         if (title) {
             return (db.articles.filter(a =>
                 a.title.toLowerCase().indexOf(title.toLowerCase()) > -1))
@@ -9,13 +9,13 @@ export const articlesRepository = {
 
         return (db.articles)
     },
-    findArticleById(id: number) {
-        let article = db.articles.find(
+    async findArticleById(id: number): Promise<ArticleType | undefined> {
+        let article: ArticleType | undefined = db.articles.find(
             a => a.id === id)
         return (article)
     },
-    createArticle(title: string, content: string,
-                  theme: string) {
+    async createArticle(title: string, content: string,
+                        theme: string): Promise<ArticleType> {
         const newDate = new Date()
         const formattedDate = newDate.toLocaleDateString("en-GB")
         const newArticle: ArticleType = {
@@ -25,19 +25,20 @@ export const articlesRepository = {
         db.articles.push(newArticle)
         return (newArticle)
     },
-    updateArticle(id: number, title: string) {
-        const updatedArticle = db.articles.find(a => a.id === id)
+    async updateArticle(id: number, title: string): Promise<ArticleType | undefined> {
+        const updatedArticle: ArticleType | undefined = db.articles.find(a => a.id === id)
         if (updatedArticle) {
             updatedArticle.title = title
         }
         return (updatedArticle)
     },
-    deleteArticle(id: number) {
+    async deleteArticle(id: number): Promise<boolean> {
         for (let i = 0; i < db.articles.length; i++) {
             if (db.articles[i].id === id) {
                 db.articles.splice(i, 1)
                 return true;
             }
         }
+        return false
     }
 }

@@ -26,18 +26,20 @@ export const getArticlesRoutes = () => {
 
     const router = express.Router()
 
-    router.get('/', (req: RequestWithQuery<ArticlesQueryModel>,
-                     res: Response<ArticleViewModel[]>) => {
-        const foundArticles = articlesRepository.findArticles(
+    router.get('/', async (req: RequestWithQuery<ArticlesQueryModel>,
+                           res: Response<ArticleViewModel[]>) => {
+        const foundArticlesPromise: Promise<ArticleType[]> = articlesRepository.findArticles(
             req.query.title?.toString())
 
+        const foundArticles: ArticleType[] = await foundArticlesPromise
         res.status(200).json(foundArticles.map(ArticleGetViewModel))
     })
 
-    router.get('/:id', (req: RequestWithParams<ArticleURIParamsIdModel>,
-                        res: Response<ArticleViewModel>) => {
-        const foundArticle = articlesRepository
+    router.get('/:id', async (req: RequestWithParams<ArticleURIParamsIdModel>,
+                              res: Response<ArticleViewModel>) => {
+        const foundArticlePromise: Promise<ArticleType | undefined> = articlesRepository
             .findArticleById(+req.params.id)
+        const foundArticle: ArticleType | undefined = await foundArticlePromise
         if (foundArticle) {
             res.status(200).json(ArticleGetViewModel(foundArticle))
         } else {
@@ -45,31 +47,35 @@ export const getArticlesRoutes = () => {
         }
     })
 
-    router.post('/', titleValidation, inputValidationMiddleware, (req: RequestWithBody<ArticleCreateModel>,
-                                                                  res: Response<ArticleViewModel | ArticleErrorsModel>) => {
-        const data = matchedData(req)
-        const createdArticle = articlesRepository.createArticle(
-            data.title, data.content, data.theme
-        )
-        res.status(201).json(ArticleGetViewModel(createdArticle))
-    })
+    router.post('/', titleValidation, inputValidationMiddleware,
+        async (req: RequestWithBody<ArticleCreateModel>,
+               res: Response<ArticleViewModel | ArticleErrorsModel>) => {
+            const data = matchedData(req)
+            const createdArticlePromise: Promise<ArticleType> = articlesRepository.createArticle(
+                data.title, data.content, data.theme
+            )
+            const createdArticle: ArticleType = await createdArticlePromise
+            res.status(201).json(ArticleGetViewModel(createdArticle))
+        })
 
-    router.put('/:id', titleValidation, inputValidationMiddleware, (req: RequestWithParamsAndBody<{ id: string },
-                                                                        ArticleUpdateModel>,
-                                                                    res: Response<ArticleViewModel | ArticleErrorsModel>) => {
-        const data = matchedData(req)
-        const updatedArticle = articlesRepository.updateArticle(
-            +data.id, data.title)
-        if (updatedArticle) {
-            res.status(200).json(ArticleGetViewModel(updatedArticle))
-        } else {
-            res.sendStatus(404)
-        }
-    })
+    router.put('/:id', titleValidation, inputValidationMiddleware,
+        async (req: RequestWithParamsAndBody<{ id: string }, ArticleUpdateModel>,
+               res: Response<ArticleViewModel | ArticleErrorsModel>) => {
+            const data = matchedData(req)
+            const updatedArticlePromise: Promise<ArticleType | undefined> = articlesRepository.updateArticle(
+                +data.id, data.title)
+            const updatedArticle: ArticleType | undefined = await updatedArticlePromise
+            if (updatedArticle) {
+                res.status(200).json(ArticleGetViewModel(updatedArticle))
+            } else {
+                res.sendStatus(404)
+            }
+        })
 
-    router.delete('/:id', (req: RequestWithParams<{ id: string }>,
-                           res: Response) => {
-        const deleteSuccess = articlesRepository.deleteArticle(+req.params.id)
+    router.delete('/:id', async (req: RequestWithParams<{ id: string }>,
+                                 res: Response) => {
+        const deleteSuccessPromise: Promise<boolean> = articlesRepository.deleteArticle(+req.params.id)
+        const deleteSuccess: true | false = await deleteSuccessPromise
         if (deleteSuccess) {
             res.sendStatus(204)
         } else {
