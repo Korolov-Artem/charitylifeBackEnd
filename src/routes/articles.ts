@@ -6,13 +6,26 @@ import {ArticleURIParamsIdModel} from "../models/ArticleURIParamsIdModel";
 import {ArticleCreateModel} from "../models/ArticleCreateModel";
 import {ArticleUpdateModel} from "../models/ArticleUpdateModel";
 import {ArticleType} from "../db/db";
-import {articlesRepository} from "../repositories/articles-repository";
-import {body, matchedData} from "express-validator";
+import {articlesRepository} from "../repositories/articles-db-repository";
+import {body, matchedData, param} from "express-validator";
 import {ArticleErrorsModel} from "../models/ArticleErrorsModel";
 import {inputValidationMiddleware} from "../middlewares/inputValidationMiddleware";
 
+const articlePostValidation = [body("title").trim().isLength({min: 1, max: 300}).withMessage(
+    "Title length has to be no less than 1 symbol and no more than 300 symbols.").escape(),
+    body("content").trim().notEmpty().withMessage("Content is required").escape(),
+    body("theme").trim().notEmpty().withMessage("Theme is required").escape(),
+]
+
 const titleValidation = body("title").trim().isLength({min: 1, max: 300}).withMessage(
     "Title length has to be no less than 1 symbol and no more than 300 symbols.").escape()
+
+const articleUpdateValidation = [
+    param("id").notEmpty().withMessage("id is required").isInt().withMessage("id should be a valid number"),
+    body("title").optional().trim().isLength({min: 1}),
+    body("theme").optional().trim().isLength({min: 1}),
+    body("content").optional().trim().isLength({min: 1}),
+]
 
 export const ArticleGetViewModel = (dbArticle: ArticleType):
     ArticleViewModel => {
@@ -37,9 +50,9 @@ export const getArticlesRoutes = () => {
 
     router.get('/:id', async (req: RequestWithParams<ArticleURIParamsIdModel>,
                               res: Response<ArticleViewModel>) => {
-        const foundArticlePromise: Promise<ArticleType | undefined> = articlesRepository
+        const foundArticlePromise: Promise<ArticleType | null> = articlesRepository
             .findArticleById(+req.params.id)
-        const foundArticle: ArticleType | undefined = await foundArticlePromise
+        const foundArticle: ArticleType | null = await foundArticlePromise
         if (foundArticle) {
             res.status(200).json(ArticleGetViewModel(foundArticle))
         } else {
@@ -47,7 +60,7 @@ export const getArticlesRoutes = () => {
         }
     })
 
-    router.post('/', titleValidation, inputValidationMiddleware,
+    router.post('/', articlePostValidation, inputValidationMiddleware,
         async (req: RequestWithBody<ArticleCreateModel>,
                res: Response<ArticleViewModel | ArticleErrorsModel>) => {
             const data = matchedData(req)
@@ -58,15 +71,31 @@ export const getArticlesRoutes = () => {
             res.status(201).json(ArticleGetViewModel(createdArticle))
         })
 
-    router.put('/:id', titleValidation, inputValidationMiddleware,
+    router.put('/:id', articleUpdateValidation, inputValidationMiddleware,
         async (req: RequestWithParamsAndBody<{ id: string }, ArticleUpdateModel>,
                res: Response<ArticleViewModel | ArticleErrorsModel>) => {
             const data = matchedData(req)
-            const updatedArticlePromise: Promise<ArticleType | undefined> = articlesRepository.updateArticle(
-                +data.id, data.title)
-            const updatedArticle: ArticleType | undefined = await updatedArticlePromise
-            if (updatedArticle) {
-                res.status(200).json(ArticleGetViewModel(updatedArticle))
+
+            if (!data.title && !data.theme && !data.content) {
+                res.status(400).send({errors: [{msg: "At least one field must be provided"}]})
+                return
+            }
+
+            const updatedData = {
+                ...(data.title && {title: data.title}),
+                ...(data.theme && {theme: data.theme}),
+                ...(data.content && {content: data.content}),
+            }
+
+            const updatedArticleStatus: boolean = await articlesRepository.updateArticle(+data.id, updatedData)
+            if (updatedArticleStatus) {
+                const updatedArticle: ArticleType | null = await articlesRepository
+                    .findArticleById(+data.id)
+                if (updatedArticle) {
+                    res.status(200).json(ArticleGetViewModel(updatedArticle))
+                } else {
+                    res.sendStatus(404)
+                }
             } else {
                 res.sendStatus(404)
             }
