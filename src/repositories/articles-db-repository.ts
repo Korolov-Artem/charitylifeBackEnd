@@ -1,50 +1,33 @@
-import {ArticleType, client} from "../db/db";
+import {articlesCollection, ArticleType} from "../db/db";
 
 export const articlesRepository = {
     async findArticles(title: string | null | undefined): Promise<ArticleType[]> {
+        const filter: any = {}
         if (title) {
-            return client.db("charitylife").collection<ArticleType>("articles").find({
-                title: {$regex: title}
-            }).toArray()
-        } else {
-            return client.db("charitylife").collection<ArticleType>("articles").find().toArray()
+            filter.title = {$regex: title}
         }
+        return articlesCollection.find(filter).toArray()
     },
 
     async findArticleById(id: number): Promise<ArticleType | null> {
-        let article: ArticleType | null = await client.db("charitylife")
-            .collection<ArticleType>("articles").findOne({
-                id: id
-            })
+        let article: ArticleType | null = await articlesCollection.findOne({
+            id: id
+        })
         return (article)
     },
 
-    async createArticle(title: string, content: string,
-                        theme: string): Promise<ArticleType> {
-        const newDate = new Date()
-        const formattedDate = newDate.toLocaleDateString("en-GB")
-        const newArticle: ArticleType = {
-            id: +(new Date()), title: title,
-            content: content, theme: theme, dataPublished: formattedDate, author: "Gene Korolov"
-        }
-        await client.db("charitylife").collection<ArticleType>("articles")
-            .insertOne(newArticle)
+    async createArticle(newArticle: ArticleType): Promise<ArticleType> {
+        await articlesCollection.insertOne(newArticle)
         return (newArticle)
     },
 
-    async updateArticle(id: number, updateData: Partial<{
-        title: string,
-        theme: string,
-        content: string
-    }>): Promise<boolean> {
-        const updatedArticle = await client.db("charitylife")
-            .collection("articles").updateOne({id: id}, {$set: updateData})
+    async updateArticle(id: number, updateData): Promise<boolean> {
+        const updatedArticle = await articlesCollection.updateOne({id: id}, {$set: updateData})
         return !!updatedArticle.matchedCount;
     },
 
     async deleteArticle(id: number): Promise<boolean> {
-        const deleteSuccess = await client.db("charitylife")
-            .collection("articles").deleteOne({id: id})
+        const deleteSuccess = await articlesCollection.deleteOne({id: id})
         return !!deleteSuccess;
     }
 }

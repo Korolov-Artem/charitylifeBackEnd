@@ -6,15 +6,15 @@ import {ArticleURIParamsIdModel} from "../models/ArticleURIParamsIdModel";
 import {ArticleCreateModel} from "../models/ArticleCreateModel";
 import {ArticleUpdateModel} from "../models/ArticleUpdateModel";
 import {ArticleType} from "../db/db";
-import {articlesRepository} from "../repositories/articles-db-repository";
 import {body, matchedData, param} from "express-validator";
 import {ArticleErrorsModel} from "../models/ArticleErrorsModel";
 import {inputValidationMiddleware} from "../middlewares/inputValidationMiddleware";
+import {articlesService} from "../domain/articles-service";
 
-const articlePostValidation = [body("title").trim().isLength({min: 1, max: 300}).withMessage(
-    "Title length has to be no less than 1 symbol and no more than 300 symbols.").escape(),
-    body("content").trim().notEmpty().withMessage("Content is required").escape(),
-    body("theme").trim().notEmpty().withMessage("Theme is required").escape(),
+const articlePostValidation = [
+    body("title").trim().notEmpty().withMessage("Title cannot be empty").escape(),
+    body("content").trim().notEmpty().withMessage("Content cannot be empty").escape(),
+    body("theme").trim().notEmpty().withMessage("Theme cannot be empty").escape(),
 ]
 
 const titleValidation = body("title").trim().isLength({min: 1, max: 300}).withMessage(
@@ -41,7 +41,7 @@ export const getArticlesRoutes = () => {
 
     router.get('/', async (req: RequestWithQuery<ArticlesQueryModel>,
                            res: Response<ArticleViewModel[]>) => {
-        const foundArticlesPromise: Promise<ArticleType[]> = articlesRepository.findArticles(
+        const foundArticlesPromise: Promise<ArticleType[]> = articlesService.findArticles(
             req.query.title?.toString())
 
         const foundArticles: ArticleType[] = await foundArticlesPromise
@@ -50,7 +50,7 @@ export const getArticlesRoutes = () => {
 
     router.get('/:id', async (req: RequestWithParams<ArticleURIParamsIdModel>,
                               res: Response<ArticleViewModel>) => {
-        const foundArticlePromise: Promise<ArticleType | null> = articlesRepository
+        const foundArticlePromise: Promise<ArticleType | null> = articlesService
             .findArticleById(+req.params.id)
         const foundArticle: ArticleType | null = await foundArticlePromise
         if (foundArticle) {
@@ -60,18 +60,18 @@ export const getArticlesRoutes = () => {
         }
     })
 
-    router.post('/', articlePostValidation, inputValidationMiddleware,
+    router.post('/', articlePostValidation, titleValidation, inputValidationMiddleware,
         async (req: RequestWithBody<ArticleCreateModel>,
                res: Response<ArticleViewModel | ArticleErrorsModel>) => {
             const data = matchedData(req)
-            const createdArticlePromise: Promise<ArticleType> = articlesRepository.createArticle(
+            const createdArticlePromise: Promise<ArticleType> = articlesService.createArticle(
                 data.title, data.content, data.theme
             )
             const createdArticle: ArticleType = await createdArticlePromise
             res.status(201).json(ArticleGetViewModel(createdArticle))
         })
 
-    router.put('/:id', articleUpdateValidation, inputValidationMiddleware,
+    router.put('/:id', articleUpdateValidation, titleValidation, inputValidationMiddleware,
         async (req: RequestWithParamsAndBody<{ id: string }, ArticleUpdateModel>,
                res: Response<ArticleViewModel | ArticleErrorsModel>) => {
             const data = matchedData(req)
@@ -87,9 +87,9 @@ export const getArticlesRoutes = () => {
                 ...(data.content && {content: data.content}),
             }
 
-            const updatedArticleStatus: boolean = await articlesRepository.updateArticle(+data.id, updatedData)
+            const updatedArticleStatus: boolean = await articlesService.updateArticle(+data.id, updatedData)
             if (updatedArticleStatus) {
-                const updatedArticle: ArticleType | null = await articlesRepository
+                const updatedArticle: ArticleType | null = await articlesService
                     .findArticleById(+data.id)
                 if (updatedArticle) {
                     res.status(200).json(ArticleGetViewModel(updatedArticle))
@@ -103,7 +103,7 @@ export const getArticlesRoutes = () => {
 
     router.delete('/:id', async (req: RequestWithParams<{ id: string }>,
                                  res: Response) => {
-        const deleteSuccessPromise: Promise<boolean> = articlesRepository.deleteArticle(+req.params.id)
+        const deleteSuccessPromise: Promise<boolean> = articlesService.deleteArticle(+req.params.id)
         const deleteSuccess: true | false = await deleteSuccessPromise
         if (deleteSuccess) {
             res.sendStatus(204)
