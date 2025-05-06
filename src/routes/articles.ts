@@ -5,16 +5,18 @@ import {ArticleViewModel} from "../models/ArticleViewModel";
 import {ArticleURIParamsIdModel} from "../models/ArticleURIParamsIdModel";
 import {ArticleCreateModel} from "../models/ArticleCreateModel";
 import {ArticleUpdateModel} from "../models/ArticleUpdateModel";
-import {ArticleType} from "../db/db";
 import {body, matchedData, param} from "express-validator";
 import {ArticleErrorsModel} from "../models/ArticleErrorsModel";
 import {inputValidationMiddleware} from "../middlewares/inputValidationMiddleware";
 import {articlesService} from "../domain/articles-service";
+import {articlesQueryRepository} from "../repositories/articles-query-repository";
+import {ArticleType} from "../db/db";
 
 const articlePostValidation = [
     body("title").trim().notEmpty().withMessage("Title cannot be empty").escape(),
     body("content").trim().notEmpty().withMessage("Content cannot be empty").escape(),
     body("theme").trim().notEmpty().withMessage("Theme cannot be empty").escape(),
+    body("synopsis").trim().notEmpty().withMessage("Synopsis cannot be empty").escape(),
 ]
 
 const titleValidation = body("title").trim().isLength({min: 1, max: 300}).withMessage(
@@ -27,12 +29,10 @@ const articleUpdateValidation = [
     body("content").optional().trim().isLength({min: 1}),
 ]
 
-export const ArticleGetViewModel = (dbArticle: ArticleType):
-    ArticleViewModel => {
-    return {
-        id: dbArticle.id,
-        title: dbArticle.title
-    }
+const sortByDescendingData = (a1: ArticleType, a2: ArticleType) => {
+    if (a1.dataPublished < a2.dataPublished) return 1
+    if (a1.dataPublished > a2.dataPublished) return -1
+    return 0
 }
 
 export const getArticlesRoutes = () => {
@@ -41,20 +41,21 @@ export const getArticlesRoutes = () => {
 
     router.get('/', async (req: RequestWithQuery<ArticlesQueryModel>,
                            res: Response<ArticleViewModel[]>) => {
-        const foundArticlesPromise: Promise<ArticleType[]> = articlesService.findArticles(
-            req.query.title?.toString())
+        const foundArticlesPromise: Promise<ArticleViewModel[]> = articlesQueryRepository
+            .findArticles(req.query.title?.toString(), +req.query.pgNumber,
+                +req.query.pgSize, sortByDescendingData)
 
-        const foundArticles: ArticleType[] = await foundArticlesPromise
-        res.status(200).json(foundArticles.map(ArticleGetViewModel))
+        const foundArticles: ArticleViewModel[] = await foundArticlesPromise
+        res.status(200).json(foundArticles)
     })
 
     router.get('/:id', async (req: RequestWithParams<ArticleURIParamsIdModel>,
                               res: Response<ArticleViewModel>) => {
-        const foundArticlePromise: Promise<ArticleType | null> = articlesService
+        const foundArticlePromise: Promise<ArticleViewModel | null> = articlesQueryRepository
             .findArticleById(+req.params.id)
-        const foundArticle: ArticleType | null = await foundArticlePromise
+        const foundArticle: ArticleViewModel | null = await foundArticlePromise
         if (foundArticle) {
-            res.status(200).json(ArticleGetViewModel(foundArticle))
+            res.status(200).json(foundArticle)
         } else {
             res.sendStatus(404)
         }
@@ -62,13 +63,14 @@ export const getArticlesRoutes = () => {
 
     router.post('/', articlePostValidation, titleValidation, inputValidationMiddleware,
         async (req: RequestWithBody<ArticleCreateModel>,
-               res: Response<ArticleViewModel | ArticleErrorsModel>) => {
+               res: Response<ArticleViewModel | null | ArticleErrorsModel>) => {
             const data = matchedData(req)
-            const createdArticlePromise: Promise<ArticleType> = articlesService.createArticle(
-                data.title, data.content, data.theme
+            const createdArticleId: number = await articlesService.createArticle(
+                data.title, data.content, data.theme, data.synopsis
             )
-            const createdArticle: ArticleType = await createdArticlePromise
-            res.status(201).json(ArticleGetViewModel(createdArticle))
+            const createdArticle: ArticleViewModel | null = await articlesQueryRepository
+                .findArticleById(createdArticleId)
+            res.status(201).json(createdArticle)
         })
 
     router.put('/:id', articleUpdateValidation, titleValidation, inputValidationMiddleware,
@@ -87,12 +89,13 @@ export const getArticlesRoutes = () => {
                 ...(data.content && {content: data.content}),
             }
 
-            const updatedArticleStatus: boolean = await articlesService.updateArticle(+data.id, updatedData)
-            if (updatedArticleStatus) {
-                const updatedArticle: ArticleType | null = await articlesService
+            const updatedArticleSuccess: boolean = await articlesService
+                .updateArticle(+data.id, updatedData)
+            if (updatedArticleSuccess) {
+                const updatedArticle: ArticleViewModel | null = await articlesQueryRepository
                     .findArticleById(+data.id)
                 if (updatedArticle) {
-                    res.status(200).json(ArticleGetViewModel(updatedArticle))
+                    res.status(200).json(updatedArticle)
                 } else {
                     res.sendStatus(404)
                 }

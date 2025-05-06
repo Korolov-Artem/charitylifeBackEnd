@@ -5,6 +5,7 @@ export type ArticleType = {
     title: string,
     content: string,
     theme: string,
+    synopsis: string,
     dataPublished: string,
     author: string,
 }
@@ -32,6 +33,7 @@ export const memoryDB: { articles: ArticleType[] } = {
         {
             id: 1, title: 'New Health', content: '<h1>Hello World</h1>',
             theme: 'Medicine', dataPublished: '22.10.22', author: 'Gene Korolov',
+            synopsis: ''
         },
     ]
 }

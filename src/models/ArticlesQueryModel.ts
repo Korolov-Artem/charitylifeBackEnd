@@ -3,5 +3,7 @@
  */
 
 export type ArticlesQueryModel = {
-    title: 'string'
+    title: 'string',
+    pgNumber: 'number',
+    pgSize: 'number',
 }
