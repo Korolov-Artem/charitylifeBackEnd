@@ -1,19 +1,17 @@
-import {articlesCollection, ArticleType} from "../db/db";
+import {articlesCollection, ArticleType} from "../../db/db";
+import {Sort} from "mongodb";
 
 export const articlesQueryRepository = {
     async findArticles(title: string | null | undefined, pgNumber = 1,
-                       pgSize = 10, sortingOrder: Function): Promise<ArticleViewModel[]> {
+                       pgSize = 10, sortingOrder: Sort): Promise<ArticleViewModel[]> {
         const filter: any = {}
         if (title) {
             filter.title = {$regex: title}
         }
         const skip = (pgNumber - 1) * pgSize
 
-
         const articles = await articlesCollection.find(filter)
-            .skip(skip).limit(pgSize).toArray()
-        articles.sort((a1,
-                       a2) => sortingOrder(a1, a2))
+            .skip(skip).limit(pgSize).sort(sortingOrder).toArray()
 
         return articles.map(article => {
             return this._mapArticleToArticleViewModel(article)

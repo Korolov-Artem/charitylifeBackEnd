@@ -1,4 +1,4 @@
-import {articlesCollection, ArticleType} from "../db/db";
+import {articlesCollection, ArticleType} from "../../db/db";
 
 export const articlesRepository = {
     async createArticle(newArticle: ArticleType): Promise<ArticleType> {

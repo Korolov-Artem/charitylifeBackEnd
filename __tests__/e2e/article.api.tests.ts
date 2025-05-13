@@ -1,6 +1,6 @@
 import request from 'supertest'
-import {ArticleCreateModel} from "../../src/models/ArticleCreateModel";
-import {ArticleUpdateModel} from "../../src/models/ArticleUpdateModel";
+import {ArticleCreateModel} from "../../src/models/articles/ArticleCreateModel";
+import {ArticleUpdateModel} from "../../src/models/articles/ArticleUpdateModel";
 import {app} from "../../src/app";
 
 describe('/articles', () => {

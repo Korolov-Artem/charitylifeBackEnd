@@ -1,16 +1,16 @@
 import express, {Response} from "express";
 import {RequestWithBody, RequestWithParams, RequestWithParamsAndBody, RequestWithQuery} from "../types";
-import {ArticlesQueryModel} from "../models/ArticlesQueryModel";
-import {ArticleViewModel} from "../models/ArticleViewModel";
-import {ArticleURIParamsIdModel} from "../models/ArticleURIParamsIdModel";
-import {ArticleCreateModel} from "../models/ArticleCreateModel";
-import {ArticleUpdateModel} from "../models/ArticleUpdateModel";
+import {ArticlesQueryModel} from "../models/articles/ArticlesQueryModel";
+import {ArticleViewModel} from "../models/articles/ArticleViewModel";
+import {ArticleURIParamsIdModel} from "../models/articles/ArticleURIParamsIdModel";
+import {ArticleCreateModel} from "../models/articles/ArticleCreateModel";
+import {ArticleUpdateModel} from "../models/articles/ArticleUpdateModel";
 import {body, matchedData, param} from "express-validator";
-import {ArticleErrorsModel} from "../models/ArticleErrorsModel";
+import {ArticleErrorsModel} from "../models/articles/ArticleErrorsModel";
 import {inputValidationMiddleware} from "../middlewares/inputValidationMiddleware";
 import {articlesService} from "../domain/articles-service";
-import {articlesQueryRepository} from "../repositories/articles-query-repository";
-import {ArticleType} from "../db/db";
+import {articlesQueryRepository} from "../repositories/articles/articles-query-repository";
+import {Sort} from "mongodb";
 
 const articlePostValidation = [
     body("title").trim().notEmpty().withMessage("Title cannot be empty").escape(),
@@ -29,21 +29,17 @@ const articleUpdateValidation = [
     body("content").optional().trim().isLength({min: 1}),
 ]
 
-const sortByDescendingData = (a1: ArticleType, a2: ArticleType) => {
-    if (a1.dataPublished < a2.dataPublished) return 1
-    if (a1.dataPublished > a2.dataPublished) return -1
-    return 0
-}
-
 export const getArticlesRoutes = () => {
 
     const router = express.Router()
 
     router.get('/', async (req: RequestWithQuery<ArticlesQueryModel>,
                            res: Response<ArticleViewModel[]>) => {
+        const sortByNewestDate = (): Sort => ({"dataPublished": 1})
+
         const foundArticlesPromise: Promise<ArticleViewModel[]> = articlesQueryRepository
             .findArticles(req.query.title?.toString(), +req.query.pgNumber,
-                +req.query.pgSize, sortByDescendingData)
+                +req.query.pgSize, sortByNewestDate())
 
         const foundArticles: ArticleViewModel[] = await foundArticlesPromise
         res.status(200).json(foundArticles)

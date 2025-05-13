@@ -1,5 +1,5 @@
 import {ArticleType} from "../db/db";
-import {articlesRepository} from "../repositories/articles-db-repository";
+import {articlesRepository} from "../repositories/articles/articles-db-repository";
 
 export const articlesService = {
     async createArticle(title: string, content: string,

@@ -1,4 +1,4 @@
-import {ArticleType, memoryDB} from "../db/db";
+import {ArticleType, memoryDB} from "../../db/db";
 
 export const articlesRepository = {
     async findArticles(title: string | null | undefined): Promise<ArticleType[]> {
@@ -15,12 +15,12 @@ export const articlesRepository = {
         return (article)
     },
     async createArticle(title: string, content: string,
-                        theme: string): Promise<ArticleType> {
+                        theme: string, synopsis: string): Promise<ArticleType> {
         const newDate = new Date()
         const formattedDate = newDate.toLocaleDateString("en-GB")
         const newArticle: ArticleType = {
             id: +(new Date()), title: title,
-            content: content, theme: theme, dataPublished: formattedDate, author: "Gene Korolov"
+            content: content, theme: theme, synopsis: synopsis, dataPublished: formattedDate, author: "Gene Korolov"
         }
         memoryDB.articles.push(newArticle)
         return (newArticle)

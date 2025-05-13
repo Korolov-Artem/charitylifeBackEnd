@@ -1,4 +1,6 @@
 import {MongoClient} from "mongodb";
+import {UserDBModel} from "../models/users/UserDBModel";
+import {ReactionDBModel} from "../models/reactions/ReactionDBModel";
 
 export type ArticleType = {
     id: number,
@@ -16,6 +18,8 @@ const client = new MongoClient(mongoURI)
 const db = client.db("charitylife")
 
 export const articlesCollection = db.collection<ArticleType>("articles")
+export const usersCollection = db.collection<UserDBModel>("users")
+export const reactionsCollection = db.collection<ReactionDBModel>("reactions")
 
 export async function runDB() {
     try {
