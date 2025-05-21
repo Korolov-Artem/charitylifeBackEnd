@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken');
 
 export const jwtService = {
     async createJWT(user: UserDBModel) {
-        return jwt.sign({userId: user.id}, settings.JWT_SECRET, {expiresIn: '1d'})
+        return jwt.sign({userId: user.id}, settings.JWT_SECRET, {expiresIn: '30d'})
     },
     async getUserIdByToken(token: string) {
         try {
