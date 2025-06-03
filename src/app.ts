@@ -6,7 +6,6 @@ import {memoryDB} from "./db/db";
 import {getUsersRoutes} from "./routes/users";
 import {getAuthRouter} from "./routes/auth";
 import {getReactionRouter} from "./routes/reactions";
-import {getEmailRouter} from "./routes/email";
 
 export const app = express();
 
@@ -24,9 +23,6 @@ app.use("/auth", authRouter)
 
 const reactionsRouter = getReactionRouter()
 app.use("/reactions", reactionsRouter)
-
-const emailRouter = getEmailRouter()
-app.use("/email", emailRouter)
 
 const testsRouter = getTestsRoutes(memoryDB)
 app.use("/__test__", testsRouter)

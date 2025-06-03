@@ -1,8 +1,8 @@
 import nodemailer from "nodemailer";
 import {emailConfig} from "../configs/email-config";
-import * as fs from "node:fs";
-import * as handlebars from "handlebars";
 import {emailAdapter} from "../adapters/email-adapter";
+import {EmailInfoModel} from "../models/email/EmailInfoModel";
+import {htmlManager} from "./html-manager";
 
 let transporter = nodemailer.createTransport({
     host: emailConfig.host,
@@ -11,31 +11,24 @@ let transporter = nodemailer.createTransport({
     auth: emailConfig.auth
 })
 
-const readHTMLFile = (path: string): Promise<string> => {
-    return new Promise((resolve, reject) => {
-        fs.readFile(path, {encoding: "utf-8"}, function (err, html) {
-            if (err) return reject(err)
-            resolve(html)
-        })
-    })
-}
-
 export const emailManager = {
-    async sendNotificationEmail(email: string, userName: string, subject: string, message: string): Promise<boolean> {
-        const html: string = await readHTMLFile("/Users/jestex/Documents/BlogCode/blog-back-end/src/templates/email/newArticleEmail.html")
+    async sendEmail(emailInfo: EmailInfoModel): Promise<boolean> {
         try {
-            const template = handlebars.compile(html)
             const replacements = {
-                email,
-                userName,
-                subject,
-                message
+                email: emailInfo.email,
+                userName: emailInfo.userName,
+                subject: emailInfo.subject,
+                message: emailInfo.message,
+                link: emailInfo.link
             }
-            const htmlToSend = template(replacements)
+
+            const htmlToSend = await htmlManager.generateHTML(
+                "./src/templates/email/newArticleEmail.html", replacements)
+
             const mailOptions = {
                 from: `"Charitylife" <info@charitylife.org>`,
-                to: email,
-                subject: subject,
+                to: emailInfo.email,
+                subject: emailInfo.subject,
                 html: htmlToSend
             }
             return await emailAdapter.sendEmail(transporter, mailOptions)
