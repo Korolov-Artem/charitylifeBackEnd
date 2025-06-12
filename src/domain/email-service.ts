@@ -1,5 +1,6 @@
 import {emailManager} from "../managers/email-manager";
 import {usersRepository} from "../repositories/users/users-repository";
+import {jwtService} from "../application/jwt-service";
 
 export const emailService = {
     async createAndSendEmailConfirmation(
@@ -24,5 +25,27 @@ export const emailService = {
             return false
         }
         return true;
-    }
+    },
+    async createAndSendPasswordReset(
+        email: string, userName: string, id: string,
+        passwordResetCode: string): Promise<boolean> {
+
+        const resetToken = await jwtService.createPasswordResetToken(email, id, passwordResetCode)
+
+        const emailInfo = {
+            email,
+            userName,
+            subject: "Password Reset",
+            link: `http://localhost:3000/auth/reset-password/initiate?token=${resetToken}`,
+            message: "Click the button below to reset your password"
+        }
+        try {
+            await emailManager.sendEmail(emailInfo);
+            await usersRepository.updateSentEmailConfirmationsById(id)
+        } catch (error) {
+            console.error(error);
+            return false
+        }
+        return true;
+    },
 }

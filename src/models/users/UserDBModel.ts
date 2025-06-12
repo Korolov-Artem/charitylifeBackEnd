@@ -4,6 +4,9 @@ export type UserDBModel = {
         userName: string,
         email: string,
         passwordHash: string,
+        refreshToken?: string
+        passwordResetCode?: string,
+        recentPasswordReset?: recentPasswordReset[],
         createdAt: Date,
     },
     emailConfirmation: {
@@ -19,4 +22,8 @@ export type UserDBModel = {
 
 type sentEmailType = {
     sentDate: Date
+}
+
+type recentPasswordReset = {
+    resetDate: Date
 }

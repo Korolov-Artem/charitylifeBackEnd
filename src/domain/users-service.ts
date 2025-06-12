@@ -6,6 +6,9 @@ import {v4 as uuidv4} from 'uuid';
 import {add} from "date-fns";
 import {emailService} from "./email-service";
 import {AuthResultModel} from "../models/auth/AuthResultModel";
+import {jwtService} from "../application/jwt-service";
+import {AuthResetPasswordTokenModel} from "../models/auth/AuthResetPasswordTokenModel";
+import {AuthResetPasswordResponseModel} from "../models/auth/AuthResetPasswordResponseModel";
 
 export const usersService = {
     async createUser(email: string, password: string,
@@ -74,17 +77,17 @@ export const usersService = {
                 }
             }
 
-            const confirmationCode = uuidv4()
+            const confirmationCode: string = uuidv4()
             await usersRepository.updateConfirmationCode(user.id, confirmationCode)
 
             const isNewUser = false
-            const emailSent = await emailService.createAndSendEmailConfirmation(
+            const emailSent: boolean = await emailService.createAndSendEmailConfirmation(
                 email,
                 user.accountData.userName,
                 user.id,
                 confirmationCode,
                 isNewUser)
-            const errorMessage = emailSent
+            const errorMessage: string = emailSent
                 ? "Your email address is not yet confirmed. We've sent you a confirmation letter," +
                 " please proceed to your mailbox and follow the instructions attached."
                 : "Something went wrong while sending confirmation email, try again later.";
@@ -99,6 +102,54 @@ export const usersService = {
         }
     },
 
+    async resetPassword(email: string, id: string) {
+        const user: UserDBModel | null = await usersRepository.findUserByEmail(email)
+        if (!user) {
+            return false
+        }
+        const userById: UserDBModel | null = await usersRepository.findUserById(id)
+        if (userById?.accountData.email != email) {
+            return false
+        }
+
+        const recentConfirmationEmails: UserDBModel | null = await
+            usersRepository.findRecentUserConfirmationEmailsById(user.id)
+        if (recentConfirmationEmails) {
+            return false
+        }
+
+        const passwordResetCode: string = uuidv4()
+        await usersRepository.resetPasswordWithATemporaryCode(user.id, passwordResetCode)
+
+        const emailSent: boolean = await emailService.createAndSendPasswordReset(
+            email,
+            user.accountData.userName,
+            user.id,
+            passwordResetCode,
+        )
+        return emailSent
+    },
+
+    async resetPasswordWithToken(token: string, newPassword: string): Promise<AuthResetPasswordResponseModel> {
+        const tokenData: AuthResetPasswordTokenModel | null | undefined =
+            await jwtService.verifyPasswordResetToken(token)
+        if (!tokenData) return {success: false, error: "Invalid token data"}
+        const user: UserDBModel | null = await usersRepository.findUserById(tokenData.id)
+        if (!user || user.accountData.email !== tokenData.email)
+            return {success: false, error: "Invalid token data"}
+        if (user.accountData.passwordResetCode !== tokenData.code)
+            return {success: false, error: "Invalid token data"}
+
+        const noRecentResets = await usersRepository.checkRecentPasswordResetById(user.id)
+        if (!noRecentResets) return {success: false, error: "Too many password resets in recent time"}
+
+        const passwordHash: string = await this._generateHash(newPassword, 10);
+        await usersRepository.updatePassword(user.id, passwordHash)
+        await usersRepository.addRecentPasswordResetById(user.id)
+        await usersRepository.clearPasswordResetCode(user.id)
+        return {success: true}
+    },
+
     async checkRecentRegistration(ip: string): Promise<boolean> {
         const recentRegistration: UserDBModel[] = await usersRepository.findRecentUsersByIp(ip)
         return recentRegistration.length > 0
@@ -110,5 +161,26 @@ export const usersService = {
 
     async findUserById(id: string): Promise<UserDBModel | null> {
         return await usersRepository.findUserById(id)
+    },
+
+    async createAuthTokens(email: string) {
+        const user: UserDBModel | null = await usersRepository.findUserByEmail(email)
+        if (!user) return false
+
+        const accessToken = await jwtService.createJWT(user);
+        const refreshToken = await jwtService.createRefreshToken(user)
+        if (user.accountData.refreshToken) {
+            await usersRepository.removeOutdatedRefreshToken(user.id, user.accountData.refreshToken)
+        }
+        const updateResult = await
+            usersRepository.updateRefreshToken(user.id, refreshToken)
+        if (!updateResult) return false
+
+        const tokens = {
+            accessToken,
+            refreshToken
+        }
+
+        return tokens
     }
 }
