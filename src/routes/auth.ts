@@ -12,6 +12,7 @@ import {AuthResetPasswordConfirmModel} from "../models/auth/AuthResetPasswordCon
 import {AuthResetPasswordTokenModel} from "../models/auth/AuthResetPasswordTokenModel";
 import {AuthResetPasswordResponseModel} from "../models/auth/AuthResetPasswordResponseModel";
 import {UserDBModel} from "../models/users/UserDBModel";
+import {usersRepository} from "../repositories/users/users-repository";
 
 export const getAuthRouter = () => {
     const router = express.Router();
@@ -32,16 +33,30 @@ export const getAuthRouter = () => {
 
     router.post('/login', async (req: RequestWithBody<UserCreateModel>, res: Response) => {
         try {
+            const tooManyLoginAttempts = await
+                usersService.verifyRecentLoginAttempts(req.body.email)
+            if (tooManyLoginAttempts) {
+                res.status(429).json({
+                    error: "Too many unsuccessful login attempts, " +
+                        "try again later"
+                })
+                return
+            }
+
             const result: AuthResultModel = await usersService.checkCredentials(
                 req.body.email, req.body.password);
             if (!result.success) {
+                const loginAttemptDate = new Date()
+                await
+                    usersRepository.addRecentLoginAttemptByEmail(req.body.email, loginAttemptDate)
                 res.status(result.statusCode).json({error: result.error})
-            } else {
+                return
+            } else { 
+                await usersRepository.clearRecentLoginsByEmail(req.body.email)
+
                 const tokens =
                     await usersService.createAuthTokens(req.body.email)
-                if (!tokens) {
-                    res.status(400).json("Failed to login")
-                } else {
+                if (typeof tokens !== "boolean") {
                     res.cookie("refreshToken", tokens.refreshToken, {
                         httpOnly: true,
                         secure: true,
@@ -50,9 +65,12 @@ export const getAuthRouter = () => {
                     })
                     res.status(200).json({
                         accessToken: tokens.accessToken,
+                        deviceId: tokens.deviceId,
                         message: "Login successful"
                     })
+                    return
                 }
+                res.status(400).json("Failed to login")
             }
         } catch (error) {
             console.error("Login error: ", error)
@@ -149,33 +167,65 @@ export const getAuthRouter = () => {
 
     router.post("/refresh", async (req: Request, res: Response) => {
         const refreshToken = req.cookies.refreshToken
-        if (!refreshToken) res.status(401).json({error: "No refresh token"})
+        const deviceIdRaw = req.headers["x-device-id"]
+        const deviceId = Array.isArray(deviceIdRaw) ? deviceIdRaw[0] : deviceIdRaw
+
+        if (!refreshToken) {
+            res.status(401).json({error: "No refresh token"})
+            return;
+        }
+        if (!deviceId || typeof deviceId !== "string") {
+            res.status(401).json({error: "Device ID required"});
+            return;
+        }
 
         try {
             const userId = await jwtService.getUserIdByToken(refreshToken)
             const user: UserDBModel | null = await usersService.findUserById(userId)
 
-            if (!user || user.accountData.refreshToken !== refreshToken) {
-                res.status(401).json({error: "Invalid refresh token"})
-            } else {
-
-                const newTokens =
-                    await usersService.createAuthTokens(user.accountData.email)
-
-                if (newTokens) {
-                    res.cookie('refreshToken', newTokens.refreshToken, {
-                        httpOnly: true,
-                        secure: true,
-                        sameSite: 'strict',
-                        maxAge: 30 * 24 * 60 * 60 * 1000
-                    });
-
-                    res.json({accessToken: newTokens.accessToken})
-                } else {
-                    res.status(401).json({error: "Something went wrong"})
-                }
+            if (!user) {
+                res.status(401).json({error: "User not found"})
+                return
             }
+
+            const tokenVersion = jwtService.verifyRefreshTokenVersion(refreshToken)
+            if (!tokenVersion) {
+                res.status(401).json({error: "Invalid refresh token"})
+                return
+            }
+
+            const correctTokenVersion =
+                user?.accountData.refreshTokensMeta?.find(
+                    meta => meta.issuedAt.getTime() === tokenVersion.getTime()
+                        && meta.deviceId === deviceId
+                )
+            if (!correctTokenVersion) {
+                res.status(401).json({error: "Invalid refresh token for this device"})
+                return
+            }
+
+
+            const newTokens =
+                await usersService.createAuthTokens(user.accountData.email, deviceId)
+
+            if (newTokens && typeof newTokens !== "boolean") {
+                res.cookie('refreshToken', newTokens.refreshToken, {
+                    httpOnly: true,
+                    secure: true,
+                    sameSite: 'strict',
+                    maxAge: 30 * 24 * 60 * 60 * 1000
+                });
+
+                res.json({
+                    accessToken: newTokens.accessToken,
+                    deviceId: newTokens.deviceId
+                })
+            } else {
+                res.status(401).json({error: "Something went wrong"})
+            }
+
         } catch (error) {
+            console.error('Refresh token error:', error);
             res.status(401).json({error: "Invalid refresh token"})
         }
     })

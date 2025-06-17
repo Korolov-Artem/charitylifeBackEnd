@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken');
 
 export const jwtService = {
     async createJWT(user: UserDBModel) {
-        return jwt.sign({userId: user.id}, settings.JWT_SECRET, {expiresIn: '3h'})
+        return jwt.sign({userId: user.id}, settings.JWT_SECRET, {expiresIn: '1h'})
     },
     async createRefreshToken(user: UserDBModel) {
         return jwt.sign({userId: user.id, email: user.accountData.email},
@@ -40,17 +40,27 @@ export const jwtService = {
             }
         } catch (error) {
             console.error("Token verification failed: ", error)
+            return null
         }
     },
-    async verifyAccessTokenExpiration(token: string): Promise<boolean> {
+    verifyRefreshTokenVersion(token: string): Date | null {
         try {
             const decoded = jwt.verify(token, settings.JWT_SECRET)
-            if (!decoded || !decoded.exp) return true
-            const currentTime = Math.floor(Date.now() / 1000)
-            const bufferTime = 5 * 60
-            return decoded.exp < (currentTime + bufferTime)
+            return new Date(decoded.issuedAt)
         } catch (error) {
-            return true
+            console.error("Token verification failed: ", error)
+            return null
         }
     }
+    // async verifyAccessTokenExpiration(token: string): Promise<boolean> {
+    //     try {
+    //         const decoded = jwt.verify(token, settings.JWT_SECRET)
+    //         if (!decoded || !decoded.exp) return true
+    //         const currentTime = Math.floor(Date.now() / 1000)
+    //         const bufferTime = 5 * 60
+    //         return decoded.exp < (currentTime + bufferTime)
+    //     } catch (error) {
+    //         return true
+    //     }
+    // }
 }

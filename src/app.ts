@@ -7,10 +7,14 @@ import {getUsersRoutes} from "./routes/users";
 import {getAuthRouter} from "./routes/auth";
 import {getReactionRouter} from "./routes/reactions";
 
+const cookieParser = require('cookie-parser')
+
 export const app = express();
 
 export const parserMiddleware = bodyParser.json();
 app.use(parserMiddleware)
+
+app.use(cookieParser());
 
 const articlesRouter = getArticlesRoutes()
 app.use("/articles", articlesRouter)

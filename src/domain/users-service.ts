@@ -1,5 +1,5 @@
 import bcrypt from 'bcrypt';
-import {UserDBModel} from "../models/users/UserDBModel";
+import {RefreshTokenMeta, UserDBModel} from "../models/users/UserDBModel";
 import {ObjectId} from "mongodb";
 import {usersRepository} from "../repositories/users/users-repository";
 import {v4 as uuidv4} from 'uuid';
@@ -163,24 +163,39 @@ export const usersService = {
         return await usersRepository.findUserById(id)
     },
 
-    async createAuthTokens(email: string) {
+    async createAuthTokens(email: string, headersDeviceId?: string) {
         const user: UserDBModel | null = await usersRepository.findUserByEmail(email)
         if (!user) return false
 
         const accessToken = await jwtService.createJWT(user);
         const refreshToken = await jwtService.createRefreshToken(user)
-        if (user.accountData.refreshToken) {
-            await usersRepository.removeOutdatedRefreshToken(user.id, user.accountData.refreshToken)
+        const finalDeviceId = headersDeviceId || new ObjectId().toString()
+
+        const refreshTokenMeta: RefreshTokenMeta = {
+            issuedAt: new Date(),
+            deviceId: finalDeviceId,
+            userId: user.id
         }
+
+        if (headersDeviceId) {
+            await usersRepository.removeOutdatedRefreshToken(user.id, headersDeviceId)
+        }
+
         const updateResult = await
-            usersRepository.updateRefreshToken(user.id, refreshToken)
+            usersRepository.updateRefreshTokenMeta(refreshTokenMeta, user.id)
         if (!updateResult) return false
 
         const tokens = {
             accessToken,
-            refreshToken
+            refreshToken,
+            deviceId: finalDeviceId
         }
 
         return tokens
+    },
+
+    async verifyRecentLoginAttempts(email: string): Promise<boolean> {
+        const recentAttempts: UserDBModel[] = await usersRepository.findRecentLoginsByEmail(email)
+        return recentAttempts.length <= 5;
     }
 }

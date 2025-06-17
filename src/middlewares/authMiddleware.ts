@@ -6,11 +6,6 @@ import {UserDBModel} from "../models/users/UserDBModel";
 
 export const authMiddleware = async (req: AuthenticatedRequest,
                                      res: Response, next: NextFunction) => {
-    if (!req.headers.authorization) {
-        res.sendStatus(401);
-        return
-    }
-
     if (!req.headers.authorization || !req.headers.authorization.startsWith('Bearer ')) {
         res.sendStatus(401);
         return;
@@ -27,16 +22,6 @@ export const authMiddleware = async (req: AuthenticatedRequest,
     if (!user) {
         res.sendStatus(401)
         return
-    }
-
-    const expiringSoon = await jwtService.verifyAccessTokenExpiration(token)
-    if (expiringSoon) {
-        const result =
-            await usersService.createAuthTokens(user.accountData.email)
-        if (!result) {
-            res.sendStatus(401)
-            return
-        }
     }
 
     req.user = user

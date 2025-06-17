@@ -1,4 +1,4 @@
-import {UserDBModel} from "../../models/users/UserDBModel";
+import {RefreshTokenMeta, UserDBModel} from "../../models/users/UserDBModel";
 import {usersCollection} from "../../db/db";
 import {DeleteResult} from "mongodb";
 
@@ -116,21 +116,43 @@ export const usersRepository = {
     async deleteUserById(id: string): Promise<DeleteResult> {
         return await usersCollection.deleteOne({id: id})
     },
-    async removeOutdatedRefreshToken(id: string, refreshToken: string) {
-        // const correctToken: UserDBModel | null = await usersCollection.findOne({
-        //     id: id,
-        //     "accountData.refreshToken": refreshToken,
-        // })
-        // if (!correctToken) return false
+    async removeOutdatedRefreshToken(id: string, deviceId: string) {
         return await usersCollection.updateOne(
             {id: id},
-            {$unset: {"accountData.refreshToken": ""}}
+            {
+                $pull: {
+                    "accountData.refreshTokensMeta": {
+                        deviceId: deviceId
+                    }
+                }
+            }
         )
     },
-    async updateRefreshToken(id: string, refreshToken: string) {
+    async updateRefreshTokenMeta(refreshTokenMeta: RefreshTokenMeta, id: string) {
         return await usersCollection.updateOne(
             {id: id},
-            {$set: {"accountData.refreshToken": refreshToken}}
+            {$push: {"accountData.refreshTokensMeta": refreshTokenMeta}}
         )
+    },
+    async findRecentLoginsByEmail(email: string): Promise<UserDBModel[]> {
+        const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000)
+        return await usersCollection.find({
+            "accountData.email": email,
+            "accountData.recentLoginAttempts.attemptDate": {$gte: fiveMinutesAgo}
+        }).toArray()
+    },
+    async clearRecentLoginsByEmail(email: string): Promise<boolean> {
+        const result = await usersCollection.updateOne(
+            {"accountData.email": email},
+            {$unset: {"accountData.recentLoginAttempts": ""}}
+        )
+        return !!result;
+    },
+    async addRecentLoginAttemptByEmail(email: string, attemptDate: Date) {
+        const result = await usersCollection.updateOne(
+            {"accountData.email": email},
+            {$push: {"accountData.recentLoginAttempts": attemptDate}}
+        )
+        return !!result;
     }
 }
