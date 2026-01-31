@@ -1,33 +1,39 @@
 import express from "express";
 import bodyParser from "body-parser";
-import {getArticlesRoutes} from "./routes/articles";
-import {getTestsRoutes} from "./routes/tests";
-import {memoryDB} from "./db/db";
-import {getUsersRoutes} from "./routes/users";
-import {getAuthRouter} from "./routes/auth";
-import {getReactionRouter} from "./routes/reactions";
+import { getArticlesRoutes } from "./routes/articles";
+import { getTestsRoutes } from "./routes/tests";
+import { memoryDB } from "./db/db";
+import { getUsersRoutes } from "./routes/users";
+import { getAuthRouter } from "./routes/auth";
+import { getReactionRouter } from "./routes/reactions";
 
-const cookieParser = require('cookie-parser')
+const cookieParser = require("cookie-parser");
 
 export const app = express();
 
+const cors = require("cors");
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+  })
+);
+
 export const parserMiddleware = bodyParser.json();
-app.use(parserMiddleware)
+app.use(parserMiddleware);
 
 app.use(cookieParser());
 
-const articlesRouter = getArticlesRoutes()
-app.use("/articles", articlesRouter)
+const articlesRouter = getArticlesRoutes();
+app.use("/articles", articlesRouter);
 
-const usersRouter = getUsersRoutes()
-app.use("/users", usersRouter)
+const usersRouter = getUsersRoutes();
+app.use("/users", usersRouter);
 
 const authRouter = getAuthRouter();
-app.use("/auth", authRouter)
+app.use("/auth", authRouter);
 
-const reactionsRouter = getReactionRouter()
-app.use("/reactions", reactionsRouter)
+const reactionsRouter = getReactionRouter();
+app.use("/reactions", reactionsRouter);
 
-const testsRouter = getTestsRoutes(memoryDB)
-app.use("/__test__", testsRouter)
-
+const testsRouter = getTestsRoutes(memoryDB);
+app.use("/__test__", testsRouter);
