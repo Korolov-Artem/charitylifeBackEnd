@@ -134,13 +134,25 @@ export const usersRepository = {
             {$push: {"accountData.refreshTokensMeta": refreshTokenMeta}}
         )
     },
-    async findRecentLoginsByEmail(email: string): Promise<UserDBModel[]> {
+
+    async getRecentLoginAttemptsCount(email: string): Promise<number> {
+        const user = await usersCollection.findOne(
+            {"accountData.email": email},
+            {projection: {"accountData.recentLoginAttempts": 1}}
+        )
+
+        if (!user || !user.accountData.recentLoginAttempts) return 0
+
         const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000)
-        return await usersCollection.find({
-            "accountData.email": email,
-            "accountData.recentLoginAttempts.attemptDate": {$gte: fiveMinutesAgo}
-        }).toArray()
+
+        const recentAttempts = user.accountData.recentLoginAttempts.filter(
+            (attempt: any) => {
+                return new Date(attempt.attemptDate) > fiveMinutesAgo;
+            }
+        )
+        return recentAttempts.length
     },
+
     async clearRecentLoginsByEmail(email: string): Promise<boolean> {
         const result = await usersCollection.updateOne(
             {"accountData.email": email},
@@ -151,7 +163,7 @@ export const usersRepository = {
     async addRecentLoginAttemptByEmail(email: string, attemptDate: Date) {
         const result = await usersCollection.updateOne(
             {"accountData.email": email},
-            {$push: {"accountData.recentLoginAttempts": attemptDate}}
+            {$push: {"accountData.recentLoginAttempts": {attemptDate: attemptDate}}}
         )
         return !!result;
     }

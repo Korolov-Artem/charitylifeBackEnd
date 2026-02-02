@@ -18,7 +18,8 @@ export type UserDBModel = {
     },
     registrationData: {
         ip: string
-    }
+    },
+    role: "user" | "admin"
 }
 
 type sentEmailType = {

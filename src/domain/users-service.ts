@@ -26,7 +26,7 @@ export const usersService = {
                 email,
                 userName,
                 passwordHash,
-                createdAt: new Date()
+                createdAt: new Date(),
             },
             emailConfirmation: {
                 confirmationCode: uuidv4(),
@@ -37,7 +37,8 @@ export const usersService = {
             },
             registrationData: {
                 ip: userIpAddress
-            }
+            },
+            role: "user"
         }
         const user: string = await usersRepository.createUser(newUser);
         const isNewUser = true
@@ -163,6 +164,10 @@ export const usersService = {
         return await usersRepository.findUserById(id)
     },
 
+    async findUserByEmail(email: string): Promise<UserDBModel | null> {
+        return await usersRepository.findUserByEmail(email)
+    },
+
     async createAuthTokens(email: string, headersDeviceId?: string) {
         const user: UserDBModel | null = await usersRepository.findUserByEmail(email)
         if (!user) return false
@@ -195,7 +200,7 @@ export const usersService = {
     },
 
     async verifyRecentLoginAttempts(email: string): Promise<boolean> {
-        const recentAttempts: UserDBModel[] = await usersRepository.findRecentLoginsByEmail(email)
-        return recentAttempts.length <= 5;
+        const recentAttempts: number = await usersRepository.getRecentLoginAttemptsCount(email)
+        return recentAttempts >= 5;
     }
 }

@@ -75,7 +75,10 @@ export const getAuthRouter = () => {
 
                     const tokens = await
                         usersService.createAuthTokens(req.body.email);
-                    if (typeof tokens !== "boolean") {
+
+                    const user = await usersService.findUserByEmail(req.body.email)
+
+                    if (typeof tokens !== "boolean" && user) {
                         res.cookie("refreshToken", tokens.refreshToken, {
                             httpOnly: true,
                             secure: true,
@@ -85,6 +88,7 @@ export const getAuthRouter = () => {
                         res.status(200).json({
                             accessToken: tokens.accessToken,
                             deviceId: tokens.deviceId,
+                            role: user.role,
                             message: "Login successful",
                         });
                         return;
