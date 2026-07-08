@@ -26,6 +26,16 @@ export const articlesQueryRepository = {
         });
     },
 
+    async getRandomArticles(limit: number = 10): Promise<ArticleViewModel[] | null> {
+        const rawArticles = await articlesCollection
+            .aggregate([{$sample: {size: limit}}])
+            .toArray()
+
+        return rawArticles.map((article) => {
+            return this._mapArticleToArticleViewModel(article as ArticleType)
+        })
+    },
+
     async findArticleById(id: number): Promise<ArticleViewModel | null> {
         if (id) {
             const article: ArticleType | null = await articlesCollection.findOne({

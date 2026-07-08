@@ -7,3 +7,7 @@ export type ArticleURIParamsIdModel = {
     theme?: string
     page?: string
 }
+
+export type RandomArtilceURIParamsModel = {
+    limit?: number
+}

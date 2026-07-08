@@ -11,10 +11,12 @@ export const getUploadRoutes = () => {
                 res.status(400).json({message: "No file uploaded"})
                 return
             }
+            const protocol = req.protocol;
+            const host = req.get('host');
+            const relativeUrl = `/uploads/${req.file.filename}`;
 
-            const fileUrl = `/uploads/${req.file.filename}`
             res.status(200).json({
-                url: fileUrl,
+                url: relativeUrl,
                 filename: req.file.filename
             })
         })

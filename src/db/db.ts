@@ -1,17 +1,31 @@
-import {MongoClient} from "mongodb";
-import {UserDBModel} from "../models/users/UserDBModel";
-import {ReactionDBModel} from "../models/reactions/ReactionDBModel";
+import { MongoClient } from "mongodb";
+import { UserDBModel } from "../models/users/UserDBModel";
+import { ReactionDBModel } from "../models/reactions/ReactionDBModel";
+import { ObjectId } from "mongodb";
+
+export interface PollOption {
+  id: string;
+  text: string;
+  votes: number;
+}
+
+export interface PollType {
+  _id?: ObjectId;
+  question: string;
+  options: PollOption[];
+  isActive: boolean;
+}
 
 export type ArticleType = {
-    id: number;
-    title: string;
-    content: string;
-    theme: string;
-    synopsis: string;
-    dataPublished: Date;
-    author: string;
-    image: string;
-    imageCredits: string;
+  id: number;
+  title: string;
+  content: string;
+  theme: string;
+  synopsis: string;
+  dataPublished: Date;
+  author: string;
+  image: string;
+  imageCredits: string;
 };
 
 const mongoURI = process.env.MONGODB_URI || "mongodb://localhost:27017";
@@ -22,32 +36,46 @@ const db = client.db("charitylife");
 export const articlesCollection = db.collection<ArticleType>("articles");
 export const usersCollection = db.collection<UserDBModel>("users");
 export const reactionsCollection = db.collection<ReactionDBModel>("reactions");
+export const pollsCollection = db.collection<PollType>("polls");
 
 export async function runDB() {
-    try {
-        await client.connect();
-        await client.db("charitylife").command({ping: 1});
-        console.log("Successfully connected to mongo server");
-    } catch {
-        await client.close();
-        console.log("Error connecting to mongo server");
-    }
+  try {
+    await client.connect();
+    await client.db("charitylife").command({ ping: 1 });
+    console.log("Successfully connected to mongo server");
+  } catch {
+    await client.close();
+    console.log("Error connecting to mongo server");
+  }
 }
 
-export const memoryDB: { articles: ArticleType[] } = {
-    articles: [
-        {
-            id: 1,
-            title: "New Health",
-            content: "<h1>Hello World</h1>",
-            theme: "Medicine",
-            dataPublished: new Date(),
-            author: "Gene Korolov",
-            synopsis: "",
-            image: "",
-            imageCredits: ""
-        },
-    ],
+export const memoryDB: { articles: ArticleType[]; polls: PollType[] } = {
+  articles: [
+    {
+      id: 1,
+      title: "New Health",
+      content: "<h1>Hello World</h1>",
+      theme: "Medicine",
+      dataPublished: new Date(),
+      author: "Gene Korolov",
+      synopsis: "",
+      image: "",
+      imageCredits: "",
+    },
+  ],
+  polls: [
+    {
+      id: "poll-123",
+      question: "Which digital format will define the next era of publishing?",
+      options: [
+        { id: "opt-1", text: "Immersive AR/VR", votes: 142 },
+        { id: "opt-2", text: "Long-form Text & Audio", votes: 890 },
+        { id: "opt-3", text: "Short-form Video", votes: 45 },
+        { id: "opt-4", text: "Interactive Data Journals", votes: 312 },
+      ],
+      isActive: true,
+    },
+  ] as PollType[],
 };
 
 export type DBType = { articles: ArticleType[] };
