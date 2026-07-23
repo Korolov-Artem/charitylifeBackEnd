@@ -2,6 +2,7 @@ import * as cheerio from "cheerio";
 import axios from "axios";
 import fs from "node:fs";
 import path from "node:path";
+import { mediaCollection } from "../db/db";
 
 // Ensure our uploads directory exists
 const uploadDir = path.resolve(process.cwd(), "uploads");
@@ -69,8 +70,7 @@ export const archiveExternalMedia = async (
           // 4. Safely determine the file type
           const contentType = response.headers["content-type"] || "";
           const originalExt = path.extname(new URL(src).pathname);
-          const ext = getExtensionFromContentType(contentType, originalExt);
-
+          const ext = getExtensionFromContentType(String(contentType), originalExt);
           // 5. Generate unique filename and save
           const uniqueSuffix =
             Date.now() + "-" + Math.round(Math.random() * 1e9);
@@ -79,10 +79,14 @@ export const archiveExternalMedia = async (
 
           fs.writeFileSync(filepath, response.data);
 
+          await mediaCollection.insertOne({
+            filename: filename,
+            url: `/uploads/${filename}`,
+            uploadedAt: new Date(),
+          });
+
           // 6. Rewrite the HTML tag to use our permanent local link!
           $(el).attr(target.attr, `/uploads/${filename}`);
-
-          console.log(`[Archiver] Successfully saved as: ${filename}`);
         } catch (error) {
           console.error(
             `[Archiver] Failed to archive media ${src}. Leaving original link intact.`,

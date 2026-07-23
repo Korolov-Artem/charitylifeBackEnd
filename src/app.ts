@@ -21,8 +21,11 @@ app.use(
   }),
 );
 
-export const parserMiddleware = bodyParser.json();
+export const parserMiddleware = bodyParser.json({ limit: "50mb" });
 app.use(parserMiddleware);
+
+app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
+
 app.use(cookieParser());
 
 const uploadsPath = path.resolve(process.cwd(), "uploads");

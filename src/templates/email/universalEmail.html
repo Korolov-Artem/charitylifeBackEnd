@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>{{subject}}</title>
+        <style>
+            body,
+            table,
+            td,
+            a {
+                -webkit-text-size-adjust: 100%;
+                -ms-text-size-adjust: 100%;
+            }
+            table,
+            td {
+                mso-table-lspace: 0pt;
+                mso-table-rspace: 0pt;
+            }
+            img {
+                -ms-interpolation-mode: bicubic;
+                border: 0;
+                height: auto;
+                line-height: 100%;
+                outline: none;
+                text-decoration: none;
+            }
+            body {
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+                background-color: #fafafa;
+            }
+        </style>
+    </head>
+    <body
+        style="
+            background-color: #fafafa;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, Helvetica, Arial, sans-serif;
+        "
+    >
+        <table
+            width="100%"
+            cellpadding="0"
+            cellspacing="0"
+            border="0"
+            style="background-color: #fafafa; padding: 40px 20px"
+        >
+            <tr>
+                <td align="center">
+                    <table
+                        width="100%"
+                        cellpadding="0"
+                        cellspacing="0"
+                        border="0"
+                        style="
+                            background-color: #ffffff;
+                            border: 1px solid #e5e5e5;
+                            max-width: 600px;
+                            width: 100%;
+                        "
+                    >
+                        <!-- BRAND HEADER -->
+                        <tr>
+                            <td
+                                align="center"
+                                style="
+                                    padding: 40px 0 30px 0;
+                                    border-bottom: 1px solid #f0f0f0;
+                                "
+                            >
+                                <h1
+                                    style="
+                                        margin: 0;
+                                        font-family:
+                                            &quot;Times New Roman&quot;,
+                                            Georgia, serif;
+                                        font-size: 26px;
+                                        font-weight: normal;
+                                        color: #000000;
+                                        letter-spacing: 3px;
+                                        text-transform: uppercase;
+                                    "
+                                >
+                                    Charity
+                                    <span
+                                        style="
+                                            color: #9ca3af;
+                                            font-style: italic;
+                                            margin: 0 8px;
+                                            font-family:
+                                                &quot;Times New Roman&quot;,
+                                                Georgia, serif;
+                                        "
+                                        >|</span
+                                    >
+                                    Life
+                                </h1>
+                            </td>
+                        </tr>
+
+                        <!-- MAIN CONTENT -->
+                        <tr>
+                            <td align="left" style="padding: 50px 40px">
+                                <!-- DYNAMIC: HERO IMAGE (Only renders if 'articleImage' is provided) -->
+                                {{#if articleImage}}
+                                <div
+                                    style="
+                                        margin-bottom: 40px;
+                                        text-align: center;
+                                    "
+                                >
+                                    <img
+                                        src="{{articleImage}}"
+                                        alt="Editorial Cover"
+                                        style="
+                                            width: 100%;
+                                            max-width: 520px;
+                                            height: auto;
+                                            display: block;
+                                            border: 0;
+                                            background-color: #18181b;
+                                        "
+                                    />
+                                </div>
+                                {{/if}}
+
+                                <h2
+                                    style="
+                                        margin: 0 0 20px 0;
+                                        font-family:
+                                            &quot;Times New Roman&quot;,
+                                            Georgia, serif;
+                                        font-size: 24px;
+                                        font-weight: normal;
+                                        color: #000000;
+                                    "
+                                >
+                                    {{subject}}
+                                </h2>
+
+                                <p
+                                    style="
+                                        margin: 0 0 20px 0;
+                                        font-family:
+                                            -apple-system, Helvetica, Arial,
+                                            sans-serif;
+                                        font-size: 16px;
+                                        line-height: 1.6;
+                                        color: #333333;
+                                    "
+                                >
+                                    Hello {{userName}},
+                                </p>
+
+                                <p
+                                    style="
+                                        margin: 0 0 40px 0;
+                                        font-family:
+                                            -apple-system, Helvetica, Arial,
+                                            sans-serif;
+                                        font-size: 16px;
+                                        line-height: 1.6;
+                                        color: #333333;
+                                    "
+                                >
+                                    {{message}}
+                                </p>
+
+                                <!-- CALL TO ACTION BUTTON -->
+                                <table
+                                    width="100%"
+                                    cellpadding="0"
+                                    cellspacing="0"
+                                    border="0"
+                                >
+                                    <tr>
+                                        <td align="center">
+                                            <a
+                                                href="{{link}}"
+                                                style="
+                                                    display: inline-block;
+                                                    background-color: #bd3900;
+                                                    color: #ffffff;
+                                                    font-family:
+                                                        -apple-system,
+                                                        Helvetica, Arial,
+                                                        sans-serif;
+                                                    font-size: 11px;
+                                                    font-weight: bold;
+                                                    text-transform: uppercase;
+                                                    letter-spacing: 2px;
+                                                    padding: 18px 36px;
+                                                    text-decoration: none;
+                                                "
+                                            >
+                                                <!-- DYNAMIC: Uses buttonText if available, otherwise falls back to the subject -->
+                                                {{#if buttonText}}
+                                                {{buttonText}} {{else}}
+                                                {{subject}} {{/if}}
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+
+                        <!-- FOOTER -->
+                        <tr>
+                            <td
+                                align="center"
+                                style="
+                                    padding: 30px 40px;
+                                    background-color: #fafafa;
+                                    border-top: 1px solid #e5e5e5;
+                                "
+                            >
+                                <p
+                                    style="
+                                        margin: 0;
+                                        font-family:
+                                            -apple-system, Helvetica, Arial,
+                                            sans-serif;
+                                        font-size: 10px;
+                                        text-transform: uppercase;
+                                        letter-spacing: 1.5px;
+                                        color: #9ca3af;
+                                    "
+                                >
+                                    © 2026 Editorial Archive. All rights
+                                    reserved.
+                                </p>
+                                <p
+                                    style="
+                                        margin: 10px 0 0 0;
+                                        font-family:
+                                            -apple-system, Helvetica, Arial,
+                                            sans-serif;
+                                        font-size: 10px;
+                                        color: #9ca3af;
+                                    "
+                                >
+                                    You are receiving this because you are
+                                    registered with Charity | Life.
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </body>
+</html>

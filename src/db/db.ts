@@ -3,6 +3,13 @@ import { UserDBModel } from "../models/users/UserDBModel";
 import { ReactionDBModel } from "../models/reactions/ReactionDBModel";
 import { ObjectId } from "mongodb";
 
+export interface MediaAsset {
+  _id?: ObjectId;
+  filename: string;
+  url: string;
+  uploadedAt: Date;
+}
+
 export interface PollOption {
   id: string;
   text: string;
@@ -10,7 +17,7 @@ export interface PollOption {
 }
 
 export interface PollType {
-  _id?: ObjectId;
+  _id?: string;
   question: string;
   options: PollOption[];
   isActive: boolean;
@@ -65,7 +72,7 @@ export const memoryDB: { articles: ArticleType[]; polls: PollType[] } = {
   ],
   polls: [
     {
-      id: "poll-123",
+      _id: "poll-123",
       question: "Which digital format will define the next era of publishing?",
       options: [
         { id: "opt-1", text: "Immersive AR/VR", votes: 142 },
@@ -77,5 +84,7 @@ export const memoryDB: { articles: ArticleType[]; polls: PollType[] } = {
     },
   ] as PollType[],
 };
+
+export const mediaCollection = db.collection<MediaAsset>("media");
 
 export type DBType = { articles: ArticleType[] };

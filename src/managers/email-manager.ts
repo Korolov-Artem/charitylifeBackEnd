@@ -4,6 +4,8 @@ import {emailAdapter} from "../adapters/email-adapter";
 import {EmailInfoModel} from "../models/email/EmailInfoModel";
 import {htmlManager} from "./html-manager";
 
+
+
 let transporter = nodemailer.createTransport({
     host: emailConfig.host,
     port: emailConfig.port,
@@ -14,16 +16,18 @@ let transporter = nodemailer.createTransport({
 export const emailManager = {
     async sendEmail(emailInfo: EmailInfoModel): Promise<boolean> {
         try {
-            const replacements = {
-                email: emailInfo.email,
-                userName: emailInfo.userName,
-                subject: emailInfo.subject,
-                message: emailInfo.message,
-                link: emailInfo.link
-            }
+          const replacements = {
+              email: emailInfo.email,
+              userName: emailInfo.userName,
+              subject: emailInfo.subject,
+              message: emailInfo.message,
+              link: emailInfo.link,
+              articleImage: emailInfo.articleImage,
+              buttonText: emailInfo.buttonText
+          }
 
-            const htmlToSend = await htmlManager.generateHTML(
-                "./src/templates/email/newArticleEmail.html", replacements)
+          const htmlToSend = await htmlManager.generateHTML(
+              "./src/templates/email/universalEmail.html", replacements)
 
             const mailOptions = {
                 from: `"Charitylife" <info@charitylife.org>`,

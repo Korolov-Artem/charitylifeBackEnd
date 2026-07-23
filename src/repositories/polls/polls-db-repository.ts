@@ -7,18 +7,21 @@ export const pollsRepository = {
     const poll = await pollsCollection.findOne({ isActive: true });
     return poll;
   },
+
   async incrementVote(
     pollId: string,
     optionId: string,
   ): Promise<PollType | null> {
     const result = await pollsCollection.findOneAndUpdate(
-      { _id: new ObjectId(pollId), "options.id": optionId },
+      // FIXED: Cast the ObjectId to 'any' to bypass the strict interface mismatch
+      { _id: new ObjectId(pollId) as any, "options.id": optionId },
       { $inc: { "options.$.votes": 1 } },
       { returnDocument: "after" },
     );
 
     return result;
   },
+
   async createPoll(question: string, optionTexts: string[]): Promise<PollType> {
     // 1. Deactivate any currently active polls
     await pollsCollection.updateMany(
@@ -33,16 +36,17 @@ export const pollsRepository = {
       votes: 0, // Start at 0 votes
     }));
 
-    // 3. Create the new poll document
-    const newPoll: PollType = {
+    // 3. Create the new poll document (Removed strict :PollType so it doesn't complain about a missing _id)
+    const newPoll = {
       question,
       options,
       isActive: true, // This is the new active poll
     };
 
     // 4. Save to MongoDB
-    const result = await pollsCollection.insertOne(newPoll);
+    const result = await pollsCollection.insertOne(newPoll as PollType);
 
-    return { ...newPoll, _id: result.insertedId };
+    // 5. Return the full object merged with the new MongoDB _id
+    return { ...newPoll, _id: result.insertedId } as PollType;
   },
 };
