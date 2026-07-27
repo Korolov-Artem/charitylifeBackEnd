@@ -35,7 +35,7 @@ export const jwtService = {
       type: "password-reset",
       iat: Math.floor(Date.now() / 1000),
     };
-    // SECURED: Reduced expiration from 1h to 15m
+    // Short-lived: the token travels by email and grants a password change.
     return jwt.sign(payload, settings.JWT_SECRET, { expiresIn: "15m" });
   },
 

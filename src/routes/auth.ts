@@ -48,7 +48,6 @@ export const getAuthRouter = () => {
       try {
         const tooManyLoginAttempts =
           await usersService.verifyRecentLoginAttempts(req.body.email);
-        // const tooManyLoginAttempts = false
         if (tooManyLoginAttempts) {
           res.status(429).json({
             error: "Too many unsuccessful login attempts, try again later",
@@ -215,8 +214,7 @@ export const getAuthRouter = () => {
     },
   );
 
-  //Call if the client receives 401 error while executing an authorized call
-
+  // Clients call this after a 401 on an authorized request.
   router.post("/refresh", async (req: Request, res: Response) => {
     const refreshToken = req.cookies.refreshToken;
     const deviceIdRaw = req.headers["x-device-id"];

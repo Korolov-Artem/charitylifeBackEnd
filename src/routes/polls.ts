@@ -4,7 +4,6 @@ import { pollsRepository } from "../repositories/polls/polls-db-repository";
 export const getPollsRoutes = () => {
   const router = express.Router();
 
-  // GET /polls/active
   router.get("/active", async (req: Request, res: Response) => {
     try {
       const activePoll = await pollsRepository.getActivePoll();
@@ -20,7 +19,6 @@ export const getPollsRoutes = () => {
     }
   });
 
-  // POST /polls/:id/vote
   router.post("/:id/vote", async (req: Request, res: Response) => {
     try {
       const pollId = req.params.id;

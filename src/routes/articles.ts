@@ -23,14 +23,13 @@ import {
 } from "../repositories/articles/articles-query-repository";
 import { Sort } from "mongodb";
 
-// ---> 1. IMPORT OUR NEW UTILITY <---
 import { archiveExternalMedia } from "../managers/archiveMedia-manager";
 
 const articlePostValidation = [
   body("title").trim().notEmpty().withMessage("Title cannot be empty").escape(),
+  // Deliberately not escaped — this is Quill markup, and escaping it would
+  // leave Cheerio nothing to parse in the archiver.
   body("content").trim().notEmpty().withMessage("Content cannot be empty"),
-  // Note: If you escape() HTML content, Cheerio can't parse it as HTML!
-  // I am assuming your Quill HTML is allowed through or handled in the service.
   body("theme").trim().notEmpty().withMessage("Theme cannot be empty").escape(),
   body("synopsis")
     .trim()
@@ -140,7 +139,6 @@ export const getArticlesRoutes = () => {
     },
   );
 
-  // ---> 2. UPDATED POST ROUTE <---
   router.post(
     "/",
     articlePostValidation,
@@ -152,7 +150,7 @@ export const getArticlesRoutes = () => {
     ) => {
       const data = matchedData(req);
 
-      // intercept the content and archive media before saving
+      // Archiving is best-effort; a failure here must not cost the author their draft.
       let processedContent = data.content;
       try {
         processedContent = await archiveExternalMedia(data.content);
@@ -162,7 +160,7 @@ export const getArticlesRoutes = () => {
 
       const createdArticleId: number = await articlesService.createArticle(
         data.title,
-        processedContent, // Pass the rewritten HTML!
+        processedContent,
         data.theme,
         data.synopsis,
         data.image,
@@ -175,7 +173,6 @@ export const getArticlesRoutes = () => {
     },
   );
 
-  // ---> 3. UPDATED PUT ROUTE <---
   router.put(
     "/:id",
     articleUpdateValidation,
@@ -194,7 +191,7 @@ export const getArticlesRoutes = () => {
         return;
       }
 
-      // If content is being updated, archive any new external media pasted in
+      // Re-run the archiver: an edit can have pasted in fresh external media.
       let processedContent = data.content;
       if (processedContent) {
         try {
@@ -207,7 +204,7 @@ export const getArticlesRoutes = () => {
       const updatedData = {
         ...(data.title && { title: data.title }),
         ...(data.theme && { theme: data.theme }),
-        ...(processedContent && { content: processedContent }), // Use processed HTML
+        ...(processedContent && { content: processedContent }),
       };
 
       const updatedArticleSuccess: boolean =

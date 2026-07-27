@@ -27,7 +27,7 @@ export const usersRepository = {
   async clearAllSessions(id: string) {
     let result = await usersCollection.updateOne(
       { id },
-      { $set: { "accountData.refreshTokensMeta": [] } }, // Wipes all active devices
+      { $set: { "accountData.refreshTokensMeta": [] } },
     );
     return result.modifiedCount === 1;
   },
@@ -95,7 +95,8 @@ export const usersRepository = {
     const threeDaysAgo = new Date();
     threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
 
-    // Check if there were 3 recent attempts to change the password
+    // Blocked only when every recorded reset falls inside the window; a single
+    // older entry means the burst has aged out and the list can be pruned.
     const allRecent = user.accountData.recentPasswordReset.every((reset) => {
       const resetDate = new Date(reset.resetDate);
       return resetDate > threeDaysAgo;

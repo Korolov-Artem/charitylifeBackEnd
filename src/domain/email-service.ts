@@ -11,8 +11,8 @@ export const emailService = {
             email,
             userName,
             subject: "Confirm your email",
-            // This is fine pointing to the backend if your backend /confirm-email
-            // route handles the validation and THEN redirects to the frontend.
+            // Points at the API, not the SPA: /auth/confirm-email validates the
+            // code and then redirects on to the frontend.
             link: `http://localhost:3000/auth/confirm-email?email=${
                 email}&code=${confirmationCode}`,
             message: "Please confirm your email address by clicking the button below"
@@ -40,13 +40,13 @@ export const emailService = {
             email,
             userName,
             subject: "Password Reset",
-            // FIXED: Pointing to the React Frontend with the correct 'resetToken' parameter
+            // Straight to the SPA here — the reset form needs the token itself.
             link: `http://localhost:5173/reset-password?resetToken=${resetToken}`,
             message: "Click the button below to reset your password"
         }
         try {
             await emailManager.sendEmail(emailInfo);
-            // Reusing the confirmation spam-protection here is a smart move
+            // Shares the confirmation counter so resets are rate-limited too.
             await usersRepository.updateSentEmailConfirmationsById(id)
         } catch (error) {
             console.error(error);

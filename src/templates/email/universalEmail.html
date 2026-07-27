@@ -3,7 +3,19 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="color-scheme" content="light" />
+        <meta name="supported-color-schemes" content="light" />
         <title>{{subject}}</title>
+        <!--
+            Palette and type mirror the publication:
+              paper #faf9f7   ink    #17140f
+              soft  #6b645c   accent #bd3900
+              rule  #e3e1dd  (flat equivalent of the site's 14% ink hairline)
+
+            Georgia is deliberate rather than a compromise: it is the site's own
+            serif fallback, so the mail speaks in the same voice as the page
+            without depending on a webfont most clients strip.
+        -->
         <style>
             body,
             table,
@@ -29,24 +41,50 @@
                 margin: 0 !important;
                 padding: 0 !important;
                 width: 100% !important;
-                background-color: #fafafa;
+                background-color: #faf9f7;
+            }
+            /* Phones: pull the print margins in so the measure stays readable. */
+            @media screen and (max-width: 600px) {
+                .px {
+                    padding-left: 26px !important;
+                    padding-right: 26px !important;
+                }
+                .headline {
+                    font-size: 26px !important;
+                }
             }
         </style>
     </head>
     <body
         style="
-            background-color: #fafafa;
+            background-color: #faf9f7;
             margin: 0;
             padding: 0;
-            font-family: -apple-system, Helvetica, Arial, sans-serif;
+            font-family: Georgia, 'Times New Roman', serif;
         "
     >
+        <!-- Preheader: the grey line clients print beside the subject. -->
+        <div
+            style="
+                display: none;
+                max-height: 0;
+                overflow: hidden;
+                mso-hide: all;
+                font-size: 1px;
+                line-height: 1px;
+                color: #faf9f7;
+            "
+        >
+            {{message}}
+        </div>
+
         <table
             width="100%"
             cellpadding="0"
             cellspacing="0"
             border="0"
-            style="background-color: #fafafa; padding: 40px 20px"
+            role="presentation"
+            style="background-color: #faf9f7; padding: 40px 16px"
         >
             <tr>
                 <td align="center">
@@ -55,101 +93,113 @@
                         cellpadding="0"
                         cellspacing="0"
                         border="0"
+                        role="presentation"
                         style="
-                            background-color: #ffffff;
-                            border: 1px solid #e5e5e5;
+                            background-color: #faf9f7;
+                            border: 1px solid #e3e1dd;
                             max-width: 600px;
                             width: 100%;
                         "
                     >
-                        <!-- BRAND HEADER -->
+                        <!-- MASTHEAD -->
                         <tr>
                             <td
-                                align="center"
+                                align="left"
+                                class="px"
                                 style="
-                                    padding: 40px 0 30px 0;
-                                    border-bottom: 1px solid #f0f0f0;
+                                    padding: 34px 44px 22px 44px;
+                                    border-bottom: 1px solid #e3e1dd;
                                 "
                             >
-                                <h1
+                                <span
                                     style="
-                                        margin: 0;
-                                        font-family:
-                                            &quot;Times New Roman&quot;,
-                                            Georgia, serif;
-                                        font-size: 26px;
+                                        font-family: Georgia, 'Times New Roman',
+                                            serif;
+                                        font-size: 24px;
                                         font-weight: normal;
-                                        color: #000000;
-                                        letter-spacing: 3px;
-                                        text-transform: uppercase;
+                                        color: #17140f;
+                                        letter-spacing: -0.3px;
                                     "
-                                >
-                                    Charity
-                                    <span
+                                    >Charity<span
                                         style="
-                                            color: #9ca3af;
+                                            color: #6b645c;
                                             font-style: italic;
-                                            margin: 0 8px;
-                                            font-family:
-                                                &quot;Times New Roman&quot;,
-                                                Georgia, serif;
+                                            padding: 0 6px;
                                         "
                                         >|</span
-                                    >
-                                    Life
-                                </h1>
+                                    >Life</span
+                                >
                             </td>
                         </tr>
 
-                        <!-- MAIN CONTENT -->
+                        <!-- PLATE -->
+                        {{#if articleImage}}
                         <tr>
-                            <td align="left" style="padding: 50px 40px">
-                                <!-- DYNAMIC: HERO IMAGE (Only renders if 'articleImage' is provided) -->
-                                {{#if articleImage}}
-                                <div
+                            <td style="padding: 0">
+                                <img
+                                    src="{{articleImage}}"
+                                    alt=""
+                                    width="600"
                                     style="
-                                        margin-bottom: 40px;
-                                        text-align: center;
+                                        width: 100%;
+                                        max-width: 600px;
+                                        height: auto;
+                                        display: block;
+                                        border: 0;
+                                        background-color: #eceae6;
+                                    "
+                                />
+                            </td>
+                        </tr>
+                        {{/if}}
+
+                        <!-- BODY -->
+                        <tr>
+                            <td
+                                align="left"
+                                class="px"
+                                style="padding: 42px 44px 8px 44px"
+                            >
+                                <p
+                                    style="
+                                        margin: 0 0 18px 0;
+                                        font-family: -apple-system,
+                                            'Helvetica Neue', Helvetica, Arial,
+                                            sans-serif;
+                                        font-size: 10px;
+                                        font-weight: 600;
+                                        text-transform: uppercase;
+                                        letter-spacing: 2.4px;
+                                        color: #bd3900;
                                     "
                                 >
-                                    <img
-                                        src="{{articleImage}}"
-                                        alt="Editorial Cover"
-                                        style="
-                                            width: 100%;
-                                            max-width: 520px;
-                                            height: auto;
-                                            display: block;
-                                            border: 0;
-                                            background-color: #18181b;
-                                        "
-                                    />
-                                </div>
-                                {{/if}}
+                                    From the Archive
+                                </p>
 
-                                <h2
+                                <h1
+                                    class="headline"
                                     style="
-                                        margin: 0 0 20px 0;
-                                        font-family:
-                                            &quot;Times New Roman&quot;,
-                                            Georgia, serif;
-                                        font-size: 24px;
+                                        margin: 0 0 26px 0;
+                                        font-family: Georgia, 'Times New Roman',
+                                            serif;
+                                        font-size: 32px;
                                         font-weight: normal;
-                                        color: #000000;
+                                        line-height: 1.15;
+                                        letter-spacing: -0.5px;
+                                        color: #17140f;
                                     "
                                 >
                                     {{subject}}
-                                </h2>
+                                </h1>
 
                                 <p
                                     style="
                                         margin: 0 0 20px 0;
-                                        font-family:
-                                            -apple-system, Helvetica, Arial,
-                                            sans-serif;
-                                        font-size: 16px;
-                                        line-height: 1.6;
-                                        color: #333333;
+                                        font-family: Georgia, 'Times New Roman',
+                                            serif;
+                                        font-size: 17px;
+                                        line-height: 1.65;
+                                        color: #17140f;
                                     "
                                 >
                                     Hello {{userName}},
@@ -157,92 +207,124 @@
 
                                 <p
                                     style="
-                                        margin: 0 0 40px 0;
-                                        font-family:
-                                            -apple-system, Helvetica, Arial,
-                                            sans-serif;
-                                        font-size: 16px;
-                                        line-height: 1.6;
-                                        color: #333333;
+                                        margin: 0 0 34px 0;
+                                        font-family: Georgia, 'Times New Roman',
+                                            serif;
+                                        font-size: 17px;
+                                        line-height: 1.65;
+                                        color: #17140f;
                                     "
                                 >
                                     {{message}}
                                 </p>
+                            </td>
+                        </tr>
 
-                                <!-- CALL TO ACTION BUTTON -->
+                        <!-- CALL TO ACTION — set left, on the text's own margin -->
+                        <tr>
+                            <td
+                                align="left"
+                                class="px"
+                                style="padding: 0 44px 42px 44px"
+                            >
                                 <table
-                                    width="100%"
                                     cellpadding="0"
                                     cellspacing="0"
                                     border="0"
+                                    role="presentation"
                                 >
                                     <tr>
-                                        <td align="center">
+                                        <td
+                                            align="center"
+                                            bgcolor="#17140f"
+                                            style="background-color: #17140f"
+                                        >
                                             <a
                                                 href="{{link}}"
                                                 style="
                                                     display: inline-block;
-                                                    background-color: #bd3900;
-                                                    color: #ffffff;
-                                                    font-family:
-                                                        -apple-system,
+                                                    background-color: #17140f;
+                                                    color: #faf9f7;
+                                                    font-family: -apple-system,
+                                                        'Helvetica Neue',
                                                         Helvetica, Arial,
                                                         sans-serif;
-                                                    font-size: 11px;
-                                                    font-weight: bold;
+                                                    font-size: 10px;
+                                                    font-weight: 600;
                                                     text-transform: uppercase;
-                                                    letter-spacing: 2px;
-                                                    padding: 18px 36px;
+                                                    letter-spacing: 2.4px;
+                                                    padding: 18px 40px;
                                                     text-decoration: none;
                                                 "
                                             >
-                                                <!-- DYNAMIC: Uses buttonText if available, otherwise falls back to the subject -->
-                                                {{#if buttonText}}
-                                                {{buttonText}} {{else}}
-                                                {{subject}} {{/if}}
+                                                {{#if
+                                                buttonText}}{{buttonText}}{{else}}{{subject}}{{/if}}
                                             </a>
                                         </td>
                                     </tr>
                                 </table>
+
+                                <p
+                                    style="
+                                        margin: 20px 0 0 0;
+                                        font-family: Georgia, 'Times New Roman',
+                                            serif;
+                                        font-size: 13px;
+                                        line-height: 1.6;
+                                        color: #6b645c;
+                                    "
+                                >
+                                    If the button doesn't work, paste this into
+                                    your browser:<br />
+                                    <a
+                                        href="{{link}}"
+                                        style="
+                                            color: #bd3900;
+                                            text-decoration: underline;
+                                            word-break: break-all;
+                                        "
+                                        >{{link}}</a
+                                    >
+                                </p>
                             </td>
                         </tr>
 
-                        <!-- FOOTER -->
+                        <!-- COLOPHON -->
                         <tr>
                             <td
-                                align="center"
+                                align="left"
+                                class="px"
                                 style="
-                                    padding: 30px 40px;
-                                    background-color: #fafafa;
-                                    border-top: 1px solid #e5e5e5;
+                                    padding: 26px 44px;
+                                    border-top: 1px solid #e3e1dd;
                                 "
                             >
                                 <p
                                     style="
-                                        margin: 0;
-                                        font-family:
-                                            -apple-system, Helvetica, Arial,
+                                        margin: 0 0 8px 0;
+                                        font-family: -apple-system,
+                                            'Helvetica Neue', Helvetica, Arial,
                                             sans-serif;
                                         font-size: 10px;
+                                        font-weight: 600;
                                         text-transform: uppercase;
-                                        letter-spacing: 1.5px;
-                                        color: #9ca3af;
+                                        letter-spacing: 2.4px;
+                                        color: #6b645c;
                                     "
                                 >
-                                    © 2026 Editorial Archive. All rights
-                                    reserved.
+                                    © 2026 Archive
                                 </p>
                                 <p
                                     style="
-                                        margin: 10px 0 0 0;
-                                        font-family:
-                                            -apple-system, Helvetica, Arial,
-                                            sans-serif;
-                                        font-size: 10px;
-                                        color: #9ca3af;
+                                        margin: 0;
+                                        font-family: Georgia, 'Times New Roman',
+                                            serif;
+                                        font-size: 13px;
+                                        line-height: 1.6;
+                                        color: #6b645c;
                                     "
                                 >
-                                    You are receiving this because you are
+                                    You're receiving this because you're
                                     registered with Charity | Life.
                                 </p>
                             </td>

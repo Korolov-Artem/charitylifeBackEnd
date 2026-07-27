@@ -7,7 +7,7 @@ import { getUsersRoutes } from "./routes/users";
 import { getAuthRouter } from "./routes/auth";
 import { getReactionRouter } from "./routes/reactions";
 import path from "node:path";
-import { getUploadRoutes } from "./routes/upload"; // Import if not already at top
+import { getUploadRoutes } from "./routes/upload";
 import { getPollsRoutes } from "./routes/polls";
 
 const cookieParser = require("cookie-parser");

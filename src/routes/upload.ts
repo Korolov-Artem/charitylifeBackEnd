@@ -7,7 +7,6 @@ export const getUploadRoutes = () => {
 
   router.get("/", async (req: Request, res: Response) => {
           try {
-              // Fetch all media assets, sorted by newest first
               const media = await mediaCollection.find().sort({ uploadedAt: -1 }).toArray();
               res.status(200).json(media);
           } catch (error) {
@@ -31,7 +30,7 @@ export const getUploadRoutes = () => {
             };
 
             try {
-                // Save the record to MongoDB so the GET route can find it later
+                // Multer has already written the file; this only indexes it for the gallery.
                 await mediaCollection.insertOne(newAsset);
 
                 res.status(200).json({
