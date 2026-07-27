@@ -21,7 +21,8 @@ export const getPollsRoutes = () => {
 
   router.post("/:id/vote", async (req: Request, res: Response) => {
     try {
-      const pollId = req.params.id;
+      // String(): newer @types/express widen route params to string | string[].
+      const pollId = String(req.params.id);
       const { optionId } = req.body;
 
       if (!optionId) {
