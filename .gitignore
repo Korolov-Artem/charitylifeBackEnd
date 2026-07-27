@@ -3,3 +3,6 @@ node_modules
 dist
 logs
 __tests__
+.env
+.env.*
+!.env.example

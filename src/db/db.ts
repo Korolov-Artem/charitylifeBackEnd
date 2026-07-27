@@ -50,9 +50,11 @@ export async function runDB() {
     await client.connect();
     await client.db("charitylife").command({ ping: 1 });
     console.log("Successfully connected to mongo server");
-  } catch {
+  } catch (error) {
     await client.close();
-    console.log("Error connecting to mongo server");
+    // The message distinguishes bad credentials from an IP that isn't on the
+    // Atlas access list, which are otherwise indistinguishable from here.
+    console.error("Error connecting to mongo server:", error);
   }
 }
 

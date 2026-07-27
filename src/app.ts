@@ -9,6 +9,7 @@ import { getReactionRouter } from "./routes/reactions";
 import path from "node:path";
 import { getUploadRoutes } from "./routes/upload";
 import { getPollsRoutes } from "./routes/polls";
+import { UPLOAD_DIR, UPLOAD_ROUTE } from "./configs/storage-config";
 
 const cookieParser = require("cookie-parser");
 
@@ -28,11 +29,9 @@ app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
 
 app.use(cookieParser());
 
-const uploadsPath = path.resolve(process.cwd(), "uploads");
-
 app.use(
-  "/uploads",
-  express.static(uploadsPath, {
+  UPLOAD_ROUTE,
+  express.static(UPLOAD_DIR, {
     setHeaders: (res, filePath) => {
       const ext = path.extname(filePath).toLowerCase();
       const contentTypes: Record<string, string> = {

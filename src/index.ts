@@ -1,3 +1,7 @@
+// Must precede every other import: db.ts and settings.ts read process.env at
+// module load, which happens as soon as they are pulled in below.
+import "dotenv/config";
+
 import {app} from "./app";
 import {runDB} from "./db/db";
 
