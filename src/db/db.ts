@@ -8,6 +8,8 @@ export interface MediaAsset {
   filename: string;
   url: string;
   uploadedAt: Date;
+  /** Cloudinary handle, needed to delete or transform the asset later. */
+  publicId?: string;
 }
 
 export interface PollOption {

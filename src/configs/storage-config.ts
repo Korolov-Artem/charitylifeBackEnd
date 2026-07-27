@@ -2,11 +2,11 @@ import fs from "node:fs";
 import path from "node:path";
 
 /**
- * Where uploaded and archived media lives on disk.
+ * Legacy local media directory.
  *
- * Defaults to <cwd>/uploads, which sits inside the app directory — fine locally,
- * but on shared hosting a redeploy that replaces that directory takes the whole
- * archive with it. Set UPLOAD_DIR to an absolute path outside the app root there.
+ * Nothing writes here any more — uploads and archived media go to Cloudinary.
+ * This only still serves `/uploads/...` URLs baked into articles published
+ * before that switch, and only on a host where those files actually exist.
  */
 export const UPLOAD_DIR = process.env.UPLOAD_DIR
   ? path.resolve(process.env.UPLOAD_DIR)

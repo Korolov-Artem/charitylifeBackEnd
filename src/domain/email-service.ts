@@ -2,6 +2,11 @@ import {emailManager} from "../managers/email-manager";
 import {usersRepository} from "../repositories/users/users-repository";
 import {jwtService} from "../application/jwt-service";
 
+// Where the links in outgoing mail point. Both default to localhost, which is
+// correct in development and useless in a real inbox — set them in production.
+const API_URL = (process.env.PUBLIC_URL || "http://localhost:3000").replace(/\/+$/, "");
+const FRONTEND_URL = (process.env.FRONTEND_URL || "http://localhost:5173").replace(/\/+$/, "");
+
 export const emailService = {
     async createAndSendEmailConfirmation(
         email: string, userName: string, id: string,
@@ -13,7 +18,7 @@ export const emailService = {
             subject: "Confirm your email",
             // Points at the API, not the SPA: /auth/confirm-email validates the
             // code and then redirects on to the frontend.
-            link: `http://localhost:3000/auth/confirm-email?email=${
+            link: `${API_URL}/auth/confirm-email?email=${
                 email}&code=${confirmationCode}`,
             message: "Please confirm your email address by clicking the button below"
         }
@@ -41,7 +46,7 @@ export const emailService = {
             userName,
             subject: "Password Reset",
             // Straight to the SPA here — the reset form needs the token itself.
-            link: `http://localhost:5173/reset-password?resetToken=${resetToken}`,
+            link: `${FRONTEND_URL}/reset-password?resetToken=${resetToken}`,
             message: "Click the button below to reset your password"
         }
         try {

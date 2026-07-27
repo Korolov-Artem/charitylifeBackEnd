@@ -1,6 +1,7 @@
 import express, {Request, Response} from "express";
 import { uploadMiddleware } from "../middlewares/uploadMiddlewate";
 import { mediaCollection } from "../db/db";
+import { uploadBuffer } from "../configs/cloudinary-config";
 
 export const getUploadRoutes = () => {
   const router = express.Router()
@@ -21,26 +22,32 @@ export const getUploadRoutes = () => {
                 return;
             }
 
-            const relativeUrl = `/uploads/${req.file.filename}`;
-
-            const newAsset = {
-                filename: req.file.filename,
-                url: relativeUrl,
-                uploadedAt: new Date(),
-            };
-
+            let stored;
             try {
-                // Multer has already written the file; this only indexes it for the gallery.
-                await mediaCollection.insertOne(newAsset);
+                stored = await uploadBuffer(req.file.buffer, req.file.originalname);
+            } catch (error) {
+                console.error("Cloudinary upload failed:", error);
+                res.status(502).json({ message: "Failed to store the file" });
+                return;
+            }
 
-                res.status(200).json({
-                    url: relativeUrl,
-                    filename: req.file.filename
+            // Indexing is for the media drawer only — the file is already safe
+            // on Cloudinary, so a database failure must not read as a lost upload.
+            try {
+                await mediaCollection.insertOne({
+                    filename: req.file.originalname,
+                    url: stored.url,
+                    publicId: stored.publicId,
+                    uploadedAt: new Date(),
                 });
             } catch (error) {
-                console.error("Database error saving media:", error);
-                res.status(500).json({ message: "File saved, but failed to record in database" });
+                console.error("Database error recording media:", error);
             }
+
+            res.status(200).json({
+                url: stored.url,
+                filename: req.file.originalname,
+            });
         });
 
     return router

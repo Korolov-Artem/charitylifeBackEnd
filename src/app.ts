@@ -16,9 +16,20 @@ const cookieParser = require("cookie-parser");
 export const app = express();
 
 const cors = require("cors");
+
+// Comma-separated, so local dev and the deployed frontend can both be allowed.
+// A hardcoded origin here blocks every request from the deployed site.
+const allowedOrigins = (
+  process.env.CORS_ORIGIN || "http://localhost:5173"
+)
+  .split(",")
+  .map((o) => o.trim().replace(/\/+$/, ""))
+  .filter(Boolean);
+
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: allowedOrigins,
+    credentials: true,
   }),
 );
 

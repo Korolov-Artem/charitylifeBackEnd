@@ -1,25 +1,8 @@
 import * as cheerio from "cheerio";
 import axios from "axios";
-import fs from "node:fs";
 import path from "node:path";
 import { mediaCollection } from "../db/db";
-import { UPLOAD_DIR } from "../configs/storage-config";
-
-const getExtensionFromContentType = (
-  contentType: string,
-  originalExt: string,
-): string => {
-  if (contentType.includes("image/jpeg")) return ".jpg";
-  if (contentType.includes("image/png")) return ".png";
-  if (contentType.includes("image/gif")) return ".gif";
-  if (contentType.includes("image/webp")) return ".webp";
-  if (contentType.includes("video/mp4")) return ".mp4";
-  if (contentType.includes("video/webm")) return ".webm";
-  if (contentType.includes("audio/mpeg")) return ".mp3";
-  if (contentType.includes("audio/wav")) return ".wav";
-
-  return originalExt || ".jpg";
-};
+import { uploadBuffer, isCloudinaryUrl } from "../configs/cloudinary-config";
 
 // Where our own media lives. Set PUBLIC_URL in production, or every image the
 // editor just uploaded looks external and gets archived a second time.
@@ -40,8 +23,8 @@ const toAbsolute = (src: string): string | null => {
 };
 
 /**
- * Pulls externally-hosted media into /uploads and rewrites the tags to point at
- * the local copy, so an article survives the source going away.
+ * Pulls externally-hosted media into Cloudinary and rewrites the tags to point
+ * at our copy, so an article survives the source going away.
  */
 export const archiveExternalMedia = async (
   htmlContent: string,
@@ -67,8 +50,13 @@ export const archiveExternalMedia = async (
       const src = $(el).attr(target.attr);
       const absolute = src ? toAbsolute(src) : null;
 
-      // Anything already on our own host is left alone.
-      if (!absolute || absolute.startsWith(SELF_ORIGIN)) continue;
+      // Anything already ours is left alone.
+      if (
+        !absolute ||
+        absolute.startsWith(SELF_ORIGIN) ||
+        isCloudinaryUrl(absolute)
+      )
+        continue;
 
       try {
         console.log(`[Archiver] Fetching external media: ${absolute}`);
@@ -80,18 +68,13 @@ export const archiveExternalMedia = async (
           timeout: 10000, // an unresponsive host must not stall the save
         });
 
-        const contentType = response.headers["content-type"] || "";
-        const originalExt = path.extname(new URL(absolute).pathname);
-        const ext = getExtensionFromContentType(String(contentType), originalExt);
-        const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-        const filename = `archive-${uniqueSuffix}${ext}`;
-        const filepath = path.join(UPLOAD_DIR, filename);
-
-        fs.writeFileSync(filepath, response.data);
+        const originalName =
+          path.basename(new URL(absolute).pathname) || "archived-media";
+        const stored = await uploadBuffer(Buffer.from(response.data), originalName);
 
         // Rewrite before recording the asset: the tag pointing at our copy is
         // the part that matters, and it must not hinge on the gallery insert.
-        $(el).attr(target.attr, `/uploads/${filename}`);
+        $(el).attr(target.attr, stored.url);
 
         // A surviving srcset would win over the src we just rewrote and send
         // the reader straight back to the origin host.
@@ -99,14 +82,15 @@ export const archiveExternalMedia = async (
 
         try {
           await mediaCollection.insertOne({
-            filename: filename,
-            url: `/uploads/${filename}`,
+            filename: originalName,
+            url: stored.url,
+            publicId: stored.publicId,
             uploadedAt: new Date(),
           });
         } catch (error) {
           // Only costs the file its row in the media drawer.
           console.error(
-            `[Archiver] Archived ${filename} but failed to record it.`,
+            `[Archiver] Archived ${stored.publicId} but failed to record it.`,
             error,
           );
         }
