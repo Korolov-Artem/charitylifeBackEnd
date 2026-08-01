@@ -47,6 +47,40 @@ export const usersCollection = db.collection<UserDBModel>("users");
 export const reactionsCollection = db.collection<ReactionDBModel>("reactions");
 export const pollsCollection = db.collection<PollType>("polls");
 
+/**
+ * What the connection string looks like, without revealing it.
+ *
+ * "bad auth" says nothing about *why*, and the string usually arrives from a
+ * hosting dashboard where a stray quote or an unsubstituted <placeholder> is
+ * invisible. This prints enough to spot that and nothing worth redacting.
+ */
+const describeURI = (uri: string) => {
+  // Computed first: a stray quote breaks the parse, and that is exactly the
+  // case where naming the problem matters most.
+  const notes: string[] = [];
+  if (/[<>]/.test(uri)) notes.push("CONTAINS <placeholder> — not substituted");
+  if (/["']/.test(uri)) notes.push("CONTAINS quotes — strip them");
+  if (uri !== uri.trim()) notes.push("has leading/trailing whitespace");
+
+  const parsed = /^(mongodb(?:\+srv)?:\/\/)(?:([^:@]*)(?::([^@]*))?@)?(.+)$/.exec(uri);
+  if (!parsed) {
+    return ["unparseable connection string", ...notes].join(" !! ");
+  }
+
+  const [, scheme, user, pass, host] = parsed;
+  if (!pass) notes.push("no password present");
+
+  return [
+    `scheme=${scheme}`,
+    `user=${user || "(none)"}`,
+    `passwordLength=${pass ? pass.length : 0}`,
+    `host=${host}`,
+    notes.length ? `!! ${notes.join("; ")}` : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+};
+
 export async function runDB() {
   try {
     await client.connect();
@@ -54,9 +88,15 @@ export async function runDB() {
     console.log("Successfully connected to mongo server");
   } catch (error) {
     await client.close();
-    // The message distinguishes bad credentials from an IP that isn't on the
-    // Atlas access list, which are otherwise indistinguishable from here.
+    // "bad auth" means the credentials were rejected; a timeout means the IP is
+    // not on the Atlas access list. The description below covers the third case,
+    // where the string itself never made it out of the dashboard intact.
     console.error("Error connecting to mongo server:", error);
+    console.error("[db] MONGODB_URI:", describeURI(mongoURI));
+    console.error(
+      "[db] MONGODB_URI is set:",
+      Boolean(process.env.MONGODB_URI),
+    );
   }
 }
 

@@ -7,6 +7,31 @@ export const isCloudinaryConfigured = Boolean(
   CLOUDINARY_CLOUD_NAME && CLOUDINARY_API_KEY && CLOUDINARY_API_SECRET,
 );
 
+/**
+ * Shape of the credentials without revealing them.
+ *
+ * Cloudinary answers a wrong key and a wrong secret with the same opaque
+ * failure, and these values are usually pasted through a hosting dashboard
+ * where an unsubstituted <placeholder> looks identical to the real thing.
+ */
+export const describeCloudinaryConfig = () => {
+  const shape = (name: string, value?: string) => {
+    if (!value) return `${name}=MISSING`;
+    const flags = [
+      /[<>]/.test(value) ? "<placeholder>" : "",
+      /["']/.test(value) ? "quoted" : "",
+      value !== value.trim() ? "whitespace" : "",
+    ].filter(Boolean);
+    return `${name}=set(len ${value.length})${flags.length ? ` !! ${flags.join(",")}` : ""}`;
+  };
+
+  return [
+    `cloud_name=${CLOUDINARY_CLOUD_NAME || "MISSING"}`,
+    shape("api_key", CLOUDINARY_API_KEY),
+    shape("api_secret", CLOUDINARY_API_SECRET),
+  ].join(" ");
+};
+
 if (isCloudinaryConfigured) {
   cloudinary.config({
     cloud_name: CLOUDINARY_CLOUD_NAME,
@@ -14,9 +39,11 @@ if (isCloudinaryConfigured) {
     api_secret: CLOUDINARY_API_SECRET,
     secure: true,
   });
+  console.log("[Cloudinary]", describeCloudinaryConfig());
 } else {
   console.warn(
-    "[Cloudinary] Not configured — uploads will fail. Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET.",
+    "[Cloudinary] Not configured — uploads will fail.",
+    describeCloudinaryConfig(),
   );
 }
 

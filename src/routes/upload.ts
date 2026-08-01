@@ -1,7 +1,7 @@
 import express, {Request, Response} from "express";
 import { uploadMiddleware } from "../middlewares/uploadMiddlewate";
 import { mediaCollection } from "../db/db";
-import { uploadBuffer } from "../configs/cloudinary-config";
+import { uploadBuffer, describeCloudinaryConfig } from "../configs/cloudinary-config";
 
 export const getUploadRoutes = () => {
   const router = express.Router()
@@ -27,6 +27,7 @@ export const getUploadRoutes = () => {
                 stored = await uploadBuffer(req.file.buffer, req.file.originalname);
             } catch (error) {
                 console.error("Cloudinary upload failed:", error);
+                console.error("[Cloudinary]", describeCloudinaryConfig());
                 res.status(502).json({ message: "Failed to store the file" });
                 return;
             }
