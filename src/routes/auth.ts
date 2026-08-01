@@ -1,4 +1,6 @@
 import express, { Request, Response } from "express";
+import { refreshCookieOptions } from "../configs/cookie-config";
+const FRONTEND_URL = (process.env.FRONTEND_URL || "http://localhost:5173").replace(/\/+$/, "");
 import { RequestWithBody, RequestWithQuery } from "../types";
 import { UserCreateModel } from "../models/users/UserCreateModel";
 import { usersService } from "../domain/users-service";
@@ -75,12 +77,7 @@ export const getAuthRouter = () => {
           const user = await usersService.findUserByEmail(req.body.email);
 
           if (typeof tokens !== "boolean" && user) {
-            res.cookie("refreshToken", tokens.refreshToken, {
-              httpOnly: true,
-              secure: true,
-              sameSite: "strict",
-              maxAge: 30 * 24 * 60 * 60 * 1000,
-            });
+            res.cookie("refreshToken", tokens.refreshToken, refreshCookieOptions);
             res.status(200).json({
               accessToken: tokens.accessToken,
               deviceId: tokens.deviceId,
@@ -106,16 +103,17 @@ export const getAuthRouter = () => {
           req.query.email,
           req.query.code,
         );
+        // Straight back to the site. The old destination was a backend-rendered
+        // page whose "login" button pointed at /auth/login — a POST-only route,
+        // so it answered "Cannot GET /auth/login".
         if (result) {
-          res.redirect("email-confirmed?status=success");
+          res.redirect(`${FRONTEND_URL}/login?confirmed=1`);
         } else {
-          res.redirect(
-            "/email-confirmed?status=error&message=invalid_credentials",
-          );
+          res.redirect(`${FRONTEND_URL}/login?confirmed=0&reason=invalid`);
         }
       } catch (error) {
         console.error("Email confirmation failed: ", error);
-        res.redirect("/email-confirmed?status=error&message=server_error");
+        res.redirect(`${FRONTEND_URL}/login?confirmed=0&reason=server_error`);
       }
     },
   );
@@ -262,12 +260,7 @@ export const getAuthRouter = () => {
       );
 
       if (newTokens && typeof newTokens !== "boolean") {
-        res.cookie("refreshToken", newTokens.refreshToken, {
-          httpOnly: true,
-          secure: true,
-          sameSite: "strict",
-          maxAge: 30 * 24 * 60 * 60 * 1000,
-        });
+        res.cookie("refreshToken", newTokens.refreshToken, refreshCookieOptions);
 
         res.json({
           accessToken: newTokens.accessToken,
