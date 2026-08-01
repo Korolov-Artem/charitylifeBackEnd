@@ -23,7 +23,17 @@ export const emailService = {
             message: "Please confirm your email address by clicking the button below"
         }
         try {
-            await emailManager.sendEmail(emailInfo);
+            // sendEmail reports failure by returning false rather than throwing,
+            // so the result has to be checked — ignoring it made every failed
+            // send look like a delivered one.
+            const sent = await emailManager.sendEmail(emailInfo);
+            if (!sent) {
+                console.error("[Email] Confirmation send failed for", email);
+                if (isNewUser) {
+                    await usersRepository.deleteUserById(id)
+                }
+                return false
+            }
             await usersRepository.updateSentEmailConfirmationsById(id)
         } catch (error) {
             console.error(error);
@@ -50,7 +60,11 @@ export const emailService = {
             message: "Click the button below to reset your password"
         }
         try {
-            await emailManager.sendEmail(emailInfo);
+            const sent = await emailManager.sendEmail(emailInfo);
+            if (!sent) {
+                console.error("[Email] Password reset send failed for", email);
+                return false
+            }
             // Shares the confirmation counter so resets are rate-limited too.
             await usersRepository.updateSentEmailConfirmationsById(id)
         } catch (error) {
