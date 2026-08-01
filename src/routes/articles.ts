@@ -16,6 +16,8 @@ import { ArticleUpdateModel } from "../models/articles/ArticleUpdateModel";
 import { body, matchedData, param } from "express-validator";
 import { ArticleErrorsModel } from "../models/articles/ArticleErrorsModel";
 import { inputValidationMiddleware } from "../middlewares/inputValidationMiddleware";
+import { authMiddleware } from "../middlewares/authMiddleware";
+import { adminMiddleware } from "../middlewares/adminMiddleware";
 import { articlesService } from "../domain/articles-service";
 import {
   articlesQueryRepository,
@@ -141,6 +143,8 @@ export const getArticlesRoutes = () => {
 
   router.post(
     "/",
+    authMiddleware,
+    adminMiddleware,
     articlePostValidation,
     titleValidation,
     inputValidationMiddleware,
@@ -175,6 +179,8 @@ export const getArticlesRoutes = () => {
 
   router.put(
     "/:id",
+    authMiddleware,
+    adminMiddleware,
     articleUpdateValidation,
     titleValidation,
     inputValidationMiddleware,
@@ -226,6 +232,8 @@ export const getArticlesRoutes = () => {
 
   router.delete(
     "/:id",
+    authMiddleware,
+    adminMiddleware,
     async (req: RequestWithParams<{ id: string }>, res: Response) => {
       const deleteSuccessPromise: Promise<boolean> =
         articlesService.deleteArticle(+req.params.id);

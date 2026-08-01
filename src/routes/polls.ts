@@ -1,5 +1,7 @@
 import express, { Request, Response } from "express";
 import { pollsRepository } from "../repositories/polls/polls-db-repository";
+import { authMiddleware } from "../middlewares/authMiddleware";
+import { adminMiddleware } from "../middlewares/adminMiddleware";
 
 export const getPollsRoutes = () => {
   const router = express.Router();
@@ -43,7 +45,8 @@ export const getPollsRoutes = () => {
     }
   });
 
-  router.post("/", async (req: Request, res: Response) => {
+  // Voting above stays public; publishing a poll does not.
+  router.post("/", authMiddleware, adminMiddleware, async (req: Request, res: Response) => {
     try {
       const { question, options } = req.body;
 

@@ -2,6 +2,8 @@ import express, {Request, Response} from "express";
 import { uploadMiddleware } from "../middlewares/uploadMiddlewate";
 import { mediaCollection } from "../db/db";
 import { uploadBuffer, describeCloudinaryConfig } from "../configs/cloudinary-config";
+import { authMiddleware } from "../middlewares/authMiddleware";
+import { adminMiddleware } from "../middlewares/adminMiddleware";
 
 export const getUploadRoutes = () => {
   const router = express.Router()
@@ -16,7 +18,7 @@ export const getUploadRoutes = () => {
           }
       });
 
-    router.post("/", uploadMiddleware.single("file"), async (req: Request, res: Response) => {
+    router.post("/", authMiddleware, adminMiddleware, uploadMiddleware.single("file"), async (req: Request, res: Response) => {
             if (!req.file) {
                 res.status(400).json({ message: "No file uploaded" });
                 return;

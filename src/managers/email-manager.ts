@@ -1,5 +1,5 @@
 import nodemailer from "nodemailer";
-import {emailConfig} from "../configs/email-config";
+import {emailConfig, isEmailConfigured, describeEmailConfig} from "../configs/email-config";
 import {emailAdapter} from "../adapters/email-adapter";
 import {EmailInfoModel} from "../models/email/EmailInfoModel";
 import {htmlManager} from "./html-manager";
@@ -15,6 +15,10 @@ let transporter = nodemailer.createTransport({
 
 export const emailManager = {
     async sendEmail(emailInfo: EmailInfoModel): Promise<boolean> {
+        if (!isEmailConfigured) {
+            console.error("[Email] Cannot send —", describeEmailConfig())
+            return false
+        }
         try {
           const replacements = {
               email: emailInfo.email,
@@ -30,7 +34,7 @@ export const emailManager = {
               "./src/templates/email/universalEmail.html", replacements)
 
             const mailOptions = {
-                from: `"Charitylife" <info@charitylife.org>`,
+                from: `"Charitylife" <${process.env.EMAIL_FROM || emailConfig.auth.user}>`,
                 to: emailInfo.email,
                 subject: emailInfo.subject,
                 html: htmlToSend
@@ -38,6 +42,7 @@ export const emailManager = {
             return await emailAdapter.sendEmail(transporter, mailOptions)
         } catch (err) {
             console.log("Error sending notification email:", err)
+            console.error("[Email]", describeEmailConfig())
             return false
         }
     }
